@@ -1,1 +1,14 @@
-Hello, World!
+<p id="counter">
+</p>
+
+<script>
+x = 0;
+setTimeout(increment, 1000);
+
+function increment(){
+x++;
+document.getElementById("counter").innerHTML = x;
+setTimeout(increment, 1000);
+}
+
+</script>
