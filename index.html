@@ -1,14 +1,83 @@
+<!DOCTYPE html>
+<h1>Test Idle Clicker</h1>
 <p id="counter">
+
 </p>
+<button onclick = "add('block')">Obtain block</button>
 
+<p id = "blockCount">
+Blocks: 
+</p>
 <script>
-x = 0;
-setTimeout(increment, 1000);
+	// time since page loaded in seconds
+	time = 0;
+	
+	// fps
+	fps = 60;
+	
+	// time between saves in seconds
+	saveTime = 5000
+	
+	blockCount = 0;
+	
+	if(document.cookie != ""){
+		blockCount = getCookie("blockCount");
+		console.log("Data loaded from cookies");
+	}
+	else{
+		blockCount = 0;
+	}
+	// read cookie data
+	
+	// refresh every 1000 / fps seconds
+	setTimeout(GUIRefresh, 1000 / fps);
+	
+	// save every 10 seconds
+	setTimeout(save, saveTime);
 
-function increment(){
-x++;
-document.getElementById("counter").innerHTML = x;
-setTimeout(increment, 1000);
-}
+	function GUIRefresh(){
+		time++;
+		document.getElementById("counter").innerHTML = "Session time: " + (time / fps).toFixed(0);	
+		document.getElementById("blockCount").innerHTML = "Blocks: " + blockCount;
+		setTimeout(GUIRefresh, 1000 / fps);
+	}
+
+	function add(type){
+		switch(type){
+			case "block":
+			blockCount++;
+		}
+	}
+	
+	function save(){
+		setCookie("blockCount", blockCount, 100);
+		setTimeout(save, saveTime);
+	}
+	
+	// following were taken from https://www.w3schools.com/js/js_cookies.asp - thanks
+	function setCookie(cname, cvalue, exdays) {
+		console.log("old: " + document.cookie);
+		var d = new Date();
+		d.setTime(d.getTime() + (exdays*24*60*60*1000));
+		var expires = "expires="+ d.toUTCString();
+		document.cookie = cname + "=" + cvalue + ";" + expires + ";";
+		console.log("new: " + document.cookie);
+	}
+	
+	function getCookie(cname) {
+		var name = cname + "=";
+		var decodedCookie = decodeURIComponent(document.cookie);
+		var ca = decodedCookie.split(';');
+		for(var i = 0; i <ca.length; i++) {
+			var c = ca[i];
+			while (c.charAt(0) == ' ') {
+				c = c.substring(1);
+			}
+			if (c.indexOf(name) == 0) {
+				return c.substring(name.length, c.length);
+			}
+		}
+		return "";
+	}
 
 </script>
