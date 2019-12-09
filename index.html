@@ -3,7 +3,7 @@
 <p id="counter">
 
 </p>
-<button onclick = "add('block')">Obtain block</button>
+<button onclick = "add('blockCount')">Obtain block</button>
 
 <p id = "blockCount">
 Blocks: 
@@ -18,10 +18,20 @@ Blocks:
 	// time between saves in seconds
 	saveTime = 5000
 	
-	blockCount = 0;
+	variableDataList = 
+	{
+		blockCount: 0,
+		houseCount: 0
+	};
 	
 	if(document.cookie != ""){
-		blockCount = getCookie("blockCount");
+		var keyList = Object.keys(variableDataList);
+		for(var i = 0; i < keyList.length; i++){
+			var key = keyList[i];
+			variableDataList[key] = getCookie(key); 
+			console.log("key="+key+", value="+variableDataList[key]);
+		}
+		//blockCount = getCookie("blockCount");
 		console.log("Data loaded from cookies");
 	}
 	else{
@@ -38,41 +48,57 @@ Blocks:
 	function GUIRefresh(){
 		time++;
 		document.getElementById("counter").innerHTML = "Session time: " + (time / fps).toFixed(0);	
-		document.getElementById("blockCount").innerHTML = "Blocks: " + blockCount;
+		document.getElementById("blockCount").innerHTML = "Blocks: " + variableDataList["blockCount"];
 		setTimeout(GUIRefresh, 1000 / fps);
 	}
 
 	function add(type){
-		switch(type){
-			case "block":
-			blockCount++;
-		}
+		variableDataList[type]++;
+		console.log(type+" | " + variableDataList[type]);
 	}
 	
+	// function to save game data as cookies
 	function save(){
-		setCookie("blockCount", blockCount, 100);
+		setCookie("blockCount", variableDataList["blockCount"], 100);
 		setTimeout(save, saveTime);
 	}
 	
-	// following were taken from https://www.w3schools.com/js/js_cookies.asp - thanks
+	// following was taken from https://www.w3schools.com/js/js_cookies.asp w/ added comments - thanks
 	function setCookie(cname, cvalue, exdays) {
-		console.log("old: " + document.cookie);
+		// obtain new date variable
 		var d = new Date();
+		
+		// set cookie expiration time by adding given time (given to function in days) to date object in milliseconds
 		d.setTime(d.getTime() + (exdays*24*60*60*1000));
+		
+		// cookie expiration param formatting
 		var expires = "expires="+ d.toUTCString();
+		
+		// append cookie to cookie list
 		document.cookie = cname + "=" + cvalue + ";" + expires + ";";
-		console.log("new: " + document.cookie);
 	}
 	
+	// following was taken from https://www.w3schools.com/js/js_cookies.asp w/ added comments - thanks
 	function getCookie(cname) {
+		// create cookie name as formatted in document.cookie
 		var name = cname + "=";
+		
+		// TODO: determine what this actually does - probably requires multiple cookie attributes
 		var decodedCookie = decodeURIComponent(document.cookie);
+		//console.log("cookie: " + document.cookie + " | decoded cookie: " + decodedCookie);
+		
+		// split cookie attributes into list of individual attributes
 		var ca = decodedCookie.split(';');
+		
+		// iterate through attribute list to search for given cookie name
 		for(var i = 0; i <ca.length; i++) {
 			var c = ca[i];
+			// delete leading spaces if necessary
 			while (c.charAt(0) == ' ') {
 				c = c.substring(1);
 			}
+			// if given name is found, cookie attribute was found
+			// return attribute's value
 			if (c.indexOf(name) == 0) {
 				return c.substring(name.length, c.length);
 			}
