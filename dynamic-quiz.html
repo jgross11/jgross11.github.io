@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			Dynamic Quiz - Login
+		</title>
+	</head>
+<html>
+
+<script>
+	
+		// User class
+	class User{
+		constructor(username){
+			this.username = username;
+			this.completedQuizzes = 0;
+			this.correctAnswers = 0;
+		}
+	} 
+	
+		// Quiz class
+	class Quiz{
+			constructor(name, numberOfQuestions){
+			this.name = name;
+			this.numberOfQuestions = numberOfQuestions;
+			this.questions = new Array(this.numberOfQuestions);
+			this.answers = new Array(this.numberOfQuestions);
+		}
+		
+		setQuestion(questionText, answerText, number){
+			if(number-- > this.numberOfQuestions){
+				console.log("This quiz doesn't have that many questions!");
+				return;
+			}
+			this.questions[number] = questionText;
+			this.answers[number] = answerText;
+		}
+	}
+		
+		user = new User("test");
+		var username = "";
+		var password = "";
+		var htmlToWrite = "";
+		var currentQuiz;
+		var currentQuizQuestion = 0;
+		
+		var quiz1 = new Quiz("Quiz 1", 3);
+		quiz1.setQuestion("What is x when x/3 = 3?", "9", 1);
+		quiz1.setQuestion("What is x when 2x = 14?", "7", 2);
+		quiz1.setQuestion("What is x when x - 4 = 17?", "21", 3);
+		
+		var quiz2 = new Quiz("Quiz 2", 3);
+		quiz2.setQuestion("In computer programming, 'int' is short for what data type?", "integer", 1);
+		quiz2.setQuestion("In computer programming, 'char' is short for what data type?", "character", 2);
+		quiz2.setQuestion("In computer programming, 'bool' is short for what data type?", "boolean", 3);
+	
+		var quiz3 = new Quiz("Quiz 3", 3);
+		quiz3.setQuestion("What is the current year (on this computer)?", (new Date).getFullYear(), 1);
+		quiz3.setQuestion("What does YCP stand for?", "york college of pennsylvania", 2);
+		quiz3.setQuestion("What is the first letter in the first name of the person who wrote this program?", "j", 3);
+	
+	// initially, load login 
+	writeLogin();
+	
+	
+	function login(){
+		user.username = document.getElementById("username").value;
+		writeHomePage();
+	}
+	
+	function writeLogin(){
+		htmlToWrite = 
+			"<h1>Dynamic Quiz - Login</h1>" + 
+			"<input id = \"username\" type=\"text\" placeholder=\"Username\"><br>" + 
+			"<input id = \"password\" type=\"password\" placeholder=\"Password\"><br><br>" +
+			"<input type=\"submit\" value=\"Log in\" onclick=\"login()\">";
+		
+		document.write(htmlToWrite);
+		document.close();
+		document.title = "Dynamic Quiz - Login";
+	}
+	
+	function writeHomePage(){
+		htmlToWrite =
+			"<body><h1> Dynamic Quiz - Home </h1>" +
+			"<h3> Logged in as: " + user.username + " </h3>" + 
+			"<ol>" +
+				"<li style=\"color: blue\" onclick=\"writeQuiz(quiz1)\"> Quiz 1 </li><br>" +
+				"<li style=\"color: blue\" onclick=\"writeQuiz(quiz2)\"> Quiz 2 </li><br>" +
+				"<li style=\"color: blue\" onclick=\"writeQuiz(quiz3)\"> Quiz 3 </li><br>" +
+			"</ol>" +
+			"Grade: " + (user.correctAnswers / 9.0 * 100).toFixed(2) + "%" + 
+			"</body>";
+		document.write(htmlToWrite);
+		document.close();
+		document.title = "Dynamic Quiz - Home";
+	}
+	
+	function writeQuiz(quiz){
+		currentQuiz = quiz;
+		htmlToWrite = 
+			"<h1> Dynamic Quiz - "+ quiz.name +" </h1>" +
+			"<h3> Logged in as: " + user.username + " | Quiz question " + (currentQuizQuestion+1) + " / " + currentQuiz.questions.length + "</h3>" +
+			"<p id=\"question\">" + quiz.questions[currentQuizQuestion] + "</p>" + 
+			"<input id=\"answerField\" type=\"text\" placeholder=\"Enter answer here\">" +
+			"<input type=\"submit\" value=\"Submit Answer\"onclick=\"updateQuizPage(++currentQuizQuestion)\"/>";
+		document.write(htmlToWrite);
+		document.close();
+		document.getElementById("answerField").focus();
+		document.title = "Dynamic Quiz - " + quiz.name;
+	}
+	
+	function updateQuizPage(nextQuestionIndex){
+		var answer = document.getElementById("answerField").value;
+		var correct = answer == currentQuiz.answers[nextQuestionIndex-1];
+		if(correct){
+			user.correctAnswers++;
+		}
+		if(currentQuiz.questions.length > nextQuestionIndex){
+			if(correct){
+				document.write(
+					"<div style=\"width:8%;background-color:green\"> Your answer is correct! </div>"
+				);
+			}
+			else{
+				document.write("<div style=\"width:13%;background-color:red\"> Sorry, that is not the correct answer. </div>");
+			}
+			writeQuiz(currentQuiz);
+		}
+		else{
+			currentQuizQuestion = 0;
+			writeHomePage();
+		}
+	}
+	
+</script>
