@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+    <title>
+        Math Collection - Altitude
+    </title>
+    <body>
+        <a href="math-home.html"> Back to Home </a>
+        <h1>Math Collection - Altitude</h1>
+        
+        <p id="questionbase"> </p><br>
+        <div id="slopeanswertext"> </div>
+        <p id="slope"></p>
+        <input id="slopeanswerbox" type="text" placeholder="Enter slope as Y / X"><br><br>
+        <div id="equationanswertext"></div>
+        <p id="equation"> </p>
+        Y = <input id="xCoeffBox" style="width: 40px"type="text" placeholder="a/b">x + <input id="coeffBox" style="width: 40px"type="text" placeholder="c/d"> <br><br>
+        <input type="submit" value="Submit answers" onclick="submitAnswers()"><br><br>
+        <textarea rows= "15"cols="20"placeholder = "This space can be used for scratch work"></textarea>
+    </body>
+    
+    <script>
+        
+        var baseElement = document.getElementById("questionbase");
+        var slopeElement = document.getElementById("slope");
+        var equationElement = document.getElementById("equation");
+        var slopeAnswerElement = document.getElementById("slopeanswerbox");
+        var equationXCoeffElement = document.getElementById("xCoeffBox");
+        var equationCoeffElement = document.getElementById("coeffBox");
+        var a, b, c, altitudePointDecider, altitudePoint, altitudeSlopeAnswer, equationXCoeffAnswer, equationCoeffAnswer;
+        var linePoints = {
+            start: null,
+            end: null
+        };
+        
+        class Point{
+            constructor(name){
+                this.x = Math.round(Math.random() * 30) - 15;
+                this.y = Math.round(Math.random() * 30) - 15;
+                this.name = name;
+            }
+        }
+        
+        function slope(p1, p2){
+            return (p2.y - p1.y) / (p2.x - p1.x);
+        }
+        newQuestion();
+        
+        function parseFraction(text){
+            for(var i = 0; i < text.length; i++){
+                if(text.charAt(i) == '/'){
+                    return parseFloat(text.substring(0, i) / parseFloat(text.substring(i+1, text.length)));
+                }
+            }
+            return parseFloat(text);
+        }
+        
+        function submitAnswers(){
+            var slopeSubmittedAnswer = parseFraction(slopeAnswerElement.value);
+            var equationSubmittedXCoeffAnswer = parseFraction(equationXCoeffElement.value).toFixed(2);
+            var equationSubmittedCoeffAnswer = parseFraction(equationCoeffElement.value).toFixed(2);
+            if((Math.abs(altitudeSlopeAnswer - slopeSubmittedAnswer) <= 0.01)){
+                document.getElementById("slopeanswertext").innerHTML = "Correct!";
+            }
+            else{
+                document.getElementById("slopeanswertext").innerHTML = "Incorrect. You submitted: m = " + slopeSubmittedAnswer + ". The correct answer was: m = " + altitudeSlopeAnswer.toFixed(2);
+            }
+            
+            if(((Math.abs(equationXCoeffAnswer - equationSubmittedXCoeffAnswer) <= 0.01) && (Math.abs(equationCoeffAnswer - equationSubmittedCoeffAnswer) <= 0.01))){
+               document.getElementById("equationanswertext").innerHTML = "Correct!";
+            }
+            else{
+                document.getElementById("equationanswertext").innerHTML = "Incorrect. You submitted: y = " + equationSubmittedXCoeffAnswer +"x + " + equationSubmittedCoeffAnswer + ". The correct answer was: y = " + equationXCoeffAnswer + "x + " + equationCoeffAnswer;
+            }
+            newQuestion();
+        }
+        
+        function newQuestion(){
+            a = new Point("A");
+            b = new Point("B");
+            c = new Point("C");
+            altitudePointDecider = Math.random();
+
+            if(altitudePointDecider > 0.66){
+                altitudePoint = c;
+                linePoints.start = a;
+                linePoints.end = b; 
+            } else if(altitudePointDecider > 0.33){
+                altitudePoint = b;
+                linePoints.start = a;
+                linePoints.end = c;
+            } else{
+                altitudePoint = a;
+                linePoints.start = b;
+                linePoints.end = c;
+            }
+            
+            var lineSegmentText = linePoints.start.name.toUpperCase() + "" + linePoints.end.name.toUpperCase();
+            var lineSegmentSlope = slope(linePoints.start, linePoints.end);
+            altitudeSlopeAnswer = -1.0 / lineSegmentSlope;
+            equationXCoeffAnswer = altitudeSlopeAnswer.toFixed(2);
+            equationCoeffAnswer = ((altitudePoint.x * altitudeSlopeAnswer) + altitudePoint.y).toFixed(2);
+            baseElement.innerHTML = "A triangle has points A = (" + a.x + ", " + a.y + "), B = (" + b.x + ", " + b.y + "), C = (" + c.x + ", " + c.y + ").";
+            slopeElement.innerHTML = "Find the slope of the altitude from " + altitudePoint.name + " to line segment " + lineSegmentText + ".";
+            equationElement.innerHTML = "Find the equation of the altitude from " + altitudePoint.name + " to line segment " + lineSegmentText + "."; 
+            
+        }
+    </script>
+</html>
