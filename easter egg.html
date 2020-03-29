@@ -1,0 +1,294 @@
+<html>
+    <h1>
+        Easter Eggs
+    </h1>
+    <canvas id="canvasRef" style="border: 1px solid black"></canvas>
+</html>
+
+<script>
+    window.addEventListener("keydown", this.keyPress, false);
+    var canvasWidth = 600;
+    var canvasHeight = 600;
+    var cellSize = 120;
+    var canvas = document.getElementById("canvasRef");
+    var frame = canvas.getContext("2d");
+    canvas.height = canvasHeight;
+    canvas.width = canvasWidth + 200;
+    var floorColor = "#875f29";
+    var enemyColor = "red";
+    var wallColor = "black";
+    var eggColor = "white";
+    var doorColor = "#ffe299";
+    var playerColor = "purple";
+    var currentRoom;
+    frame.strokeStyle = "black";
+
+    function keyPress(e){
+        var key = e.key;
+        if(key == "w"){
+            if(player.y > 0 && currentRoom.grid[player.x][player.y-1] != 2){
+                player.y--;
+            }
+        }
+        else if(key == "s"){
+            if(player.y < 4 && currentRoom.grid[player.x][player.y+1] != 2){
+                player.y++;
+            }
+        }
+        else if(key == "a"){
+            if(player.x > 0 && currentRoom.grid[player.x-1][player.y] != 2){
+                player.x--;
+            }
+        }
+        else if(key == "d"){
+            if(player.x < 4 && currentRoom.grid[player.x+1][player.y] != 2){
+                player.x++;
+            }
+        }
+        // explosion destroys enemies / walls in neighboring cells
+        else if(key == "f"){
+            for(var i = player.x - 1; i < player.x + 2; i++){
+                for(var j = player.y - 1; j < player.y + 2; j++){
+                    if(i < 0 || j < 0 || i > 4 || j > 4){
+                        continue;
+                    }
+                    else{
+                        if(currentRoom.grid[i][j] == 1 || currentRoom.grid[i][j] == 2){
+                            currentRoom.grid[i][j] = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        // collided with enemy
+        if(currentRoom.grid[player.x][player.y] == 1){
+            currentRoom.grid[player.x][player.y] = 0;
+            player.decrementHealth();
+        }
+        updateRoom();
+        drawRoom();
+    }
+
+    function Room(){
+        // neighboring room nodes initially null
+        this.north = null;
+        this.south = null;
+        this.east = null;
+        this.west = null;
+
+        // generate number of eggs, enemies, walls, and doors per room
+        
+        // # eggs = [0, 3]
+        var eggsPerRoom = Math.floor(Math.random()*4);
+
+        // # enemies = [0, 2]
+        var enemiesPerRoom = Math.floor(Math.random() * 3);
+
+        // # walls = [2, 5]
+        var wallsPerRoom = 2 + Math.floor((Math.random() * 4));
+
+        // # doors = [0, 3] (entry door is overwritten upon transition from room to room)
+        var doorsPerRoom = Math.floor(Math.random() * 4);
+
+        console.log("eggs " + eggsPerRoom);
+        console.log("enemies " + enemiesPerRoom);
+        console.log("walls " + wallsPerRoom);
+        console.log("doors " + doorsPerRoom);
+        
+        // grid is initially a 5x5 grid
+        this.grid = new Array(5);
+        for(var i = 0; i < this.grid.length; i++){
+            this.grid[i] = new Array(5);
+            for(var j = 0; j < this.grid[i].length; j++){
+                this.grid[i][j] = 0;
+            }
+        }
+        this.grid[0][0] = 1;
+        this.grid[1][0] = 1;
+        console.log(this.grid);
+    }
+
+    function Player(){
+        this.x = 2;
+        this.y = 2;
+        this.eggsCollected = 0;
+        this.health = 5;
+        this.decrementHealth = function(){
+            if(--this.health == 0){
+                gameOver();
+            }
+        }
+    }
+
+    var player = new Player();
+
+    function drawRoom(){
+        frame.fillStyle = floorColor;
+        frame.fillRect(0, 0, canvasWidth, canvasHeight);
+        for(var y = 0; y < currentRoom.grid.length; y++){
+            for(var x = 0; x < currentRoom.grid[0].length; x++){
+                var entityID = currentRoom.grid[x][y];
+                // enemy in tile
+                if(entityID == 1){
+                    frame.fillStyle = enemyColor;
+                    frame.fillRect(x*cellSize+(cellSize/6), y*cellSize+(cellSize/6), cellSize-(cellSize/3), cellSize-(cellSize/3));
+                }
+                // wall in tile
+                else if(entityID == 2){
+                    frame.fillStyle = wallColor;
+                    frame.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                }
+                // egg in tile
+                else if(entityID == 3){
+                    frame.fillStyle = eggColor;
+                    frame.beginPath();
+                    frame.arc(x*cellSize+ (cellSize / 2), y*cellSize + (cellSize / 2), cellSize / 4, 0, 2 * Math.PI);
+                    frame.fill();
+                    frame.fillStyle = "black";
+                    frame.stroke();
+                }
+                // door in tile
+                else if(entityID == 4){
+                    frame.fillStyle = doorColor;
+                    frame.fillRect(x*cellSize+cellSize / 8, y*cellSize, 3*cellSize/4, cellSize);
+                    frame.fillStyle = "yellow";
+                    frame.beginPath();
+                    frame.arc(x*cellSize + 5*cellSize / 8, y*cellSize + cellSize / 2, cellSize / 8, cellSize / 8, 0, 2 * Math.PI);
+                    frame.fill();
+                    frame.fillStyle = "black";
+                    frame.stroke();
+                }
+
+                frame.strokeRect(x*cellSize, y*cellSize, cellSize, cellSize);
+            }
+        }
+
+        // draw player
+        frame.fillStyle = playerColor;
+        frame.fillRect(player.x*cellSize+(cellSize/6), player.y*cellSize+(cellSize/6), cellSize-(cellSize/3), cellSize-(cellSize/3));
+    }
+
+    // inefficient as only enemies are updated yet entire n x n room is iterated through
+    // some enemies will move more than once as they move to an index that has yet to be checked
+    // horrible 'pathfinding' but it is just a demo after all
+    function updateRoom(){
+        var exclusionPoints = [];
+        for(var y = 0; y < currentRoom.grid.length; y++){
+            for(var x = 0; x < currentRoom.grid[0].length; x++){
+                var alreadyComputed = false;
+                for(var i = 0; i < exclusionPoints.length; i++){
+                    if(exclusionPoints[i][0] == x && exclusionPoints[i][1] == y){
+                        console.log("ep: " + exclusionPoints[i]);
+                        console.log("x,y: " + [x, y]);
+                        alreadyComputed = true;
+                        break;
+                    }
+                }   
+                if(alreadyComputed){
+                    continue;
+                }
+                var entityID = currentRoom.grid[x][y];
+                if(entityID == 1){
+                    var xDif = x - player.x;
+                    var yDif = y - player.y;
+                    // determine which direction to move
+                    var xDelta = (xDif < 0 ? 1 : -1);
+                    var yDelta = (yDif < 0 ? 1 : -1);
+                    
+                    var didntMove = false;
+
+                    // larger x than y distance
+                    if(Math.abs(xDif) > Math.abs(yDif)){
+                        // dont move if item occupies cell
+                        if(currentRoom.grid[x+xDelta][y] != 0){
+                            // try closing y distance before backtracking
+                            if(currentRoom.grid[x][y+yDelta] != 0){
+                                // try backtracking in smaller direction first
+                                if(currentRoom.grid[x-xDelta][y] != 0){
+                                    // finally, try backtracking in larger direction
+                                    if(currentRoom.grid[x][y-yDelta] != 0 ){
+                                        // incredible that you've gotten yourself into this situation. 
+                                        // you don't deserve to move. 
+                                        console.log("the immovable object");
+                                        didntMove = true;
+                                    }
+                                    else{
+                                        currentRoom.grid[x][y-yDelta] = 1;
+                                        exclusionPoints.push([x, y-yDelta]);
+                                    }
+                                }
+                                else{
+                                    currentRoom.grid[x-xDelta][y] = 1;
+                                    exclusionPoints.push([x-xDelta, y]);
+                                }
+                            }
+                            else{
+                                currentRoom.grid[x][y+yDelta] = 1;
+                                exclusionPoints.push([x, y+yDelta]);
+                            }
+                        }
+                        else{
+                            currentRoom.grid[x+xDelta][y] = 1;
+                            exclusionPoints.push([x+xDelta, y]);
+                        }
+                    }
+                    // larger y than x distance
+                    else{
+                        // dont move if item occupies cell
+                        if(currentRoom.grid[x][y+yDelta] != 0){
+                            // try closing y distance before backtracking
+                            if(currentRoom.grid[x+xDelta][y] != 0){
+                                // try backtracking in smaller direction first
+                                if(currentRoom.grid[x][y-yDelta] != 0){
+                                    // finally, try backtracking in larger direction
+                                    if(currentRoom.grid[x-xDelta][y] != 0){
+                                        // incredible that you've gotten yourself into this situation. 
+                                        // you don't deserve to move. 
+                                        console.log("the immovable object");
+                                        didntMove = true;
+                                    }
+                                    else{
+                                        currentRoom.grid[x-xDelta][y] = 1;
+                                        exclusionPoints.push([x-xDelta, y]);
+                                    }
+                                }
+                                else{
+                                    currentRoom.grid[x][y-yDelta] = 1;
+                                    exclusionPoints.push([x, y-yDelta]);
+                                }
+                            }
+                            else{
+                                currentRoom.grid[x+xDelta][y] = 1;
+                                exclusionPoints.push([x+xDelta, y]);
+                            }
+                        }
+                        else{
+                            console.log("moving down");
+                            currentRoom.grid[x][y+yDelta] = 1;
+                            exclusionPoints.push([x, y+yDelta]);
+                        }
+                    }
+                    if(!didntMove){
+                        currentRoom.grid[x][y] = 0;
+                        var updatedPosition = exclusionPoints[exclusionPoints.length -1];
+                        console.log("x,y: " + [x, y]);
+                        console.log(updatedPosition);
+                        // check if enemy has collided with player
+                        // if so, destroy enemy and decrement player health
+                        if(updatedPosition[0] == player.x && updatedPosition[1] == player.y){
+                            currentRoom.grid[updatedPosition[0]][updatedPosition[1]] = 0;
+                            player.decrementHealth();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    currentRoom = new Room();
+    drawRoom();
+    function gameOver(){
+        canvas.remove();
+        document.write("game over");
+    }
+</script>
