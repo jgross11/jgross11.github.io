@@ -9,11 +9,14 @@
     window.addEventListener("keydown", this.keyPress, false);
     var canvasWidth = 600;
     var canvasHeight = 600;
-    var cellSize = 120;
+    var HUDWidth = 300;
+    var mapDisplayHeight = 200;
+    var numCells = 10;
+    var cellSize = canvasWidth / numCells;
     var canvas = document.getElementById("canvasRef");
     var frame = canvas.getContext("2d");
     canvas.height = canvasHeight;
-    canvas.width = canvasWidth + 200;
+    canvas.width = canvasWidth + HUDWidth;
     var floorColor = "#875f29";
     var enemyColor = "red";
     var wallColor = "black";
@@ -22,39 +25,58 @@
     var playerColor = "purple";
     var currentRoom;
     frame.strokeStyle = "black";
+    var ENEMY_ID = 1;
+    var WALL_ID = 2;
+    var EGG_ID = 3;
+    var DOOR_ID = 4;
+    var DIRECTION_NORTH = 100;
+    var DIRECTION_EAST = 101; 
+    var DIRECTION_SOUTH = 102;
+    var DIRECTION_WEST = 103;
+    var displayCellSize = 10;
+    var ROOM_NOT_DISCOVERED = 0;
 
     function keyPress(e){
-        var key = e.key;
+        var key = e.key.toLowerCase();
         if(key == "w"){
-            if(player.y > 0 && currentRoom.grid[player.x][player.y-1] != 2){
+            if(player.y > 0 && currentRoom.grid[player.x][player.y-1] != WALL_ID){
                 player.y--;
+                player.stepsTaken++;
             }
         }
         else if(key == "s"){
-            if(player.y < 4 && currentRoom.grid[player.x][player.y+1] != 2){
+            if(player.y < numCells - 1 && currentRoom.grid[player.x][player.y+1] != WALL_ID){
                 player.y++;
+                player.stepsTaken++;
             }
         }
         else if(key == "a"){
-            if(player.x > 0 && currentRoom.grid[player.x-1][player.y] != 2){
+            if(player.x > 0 && currentRoom.grid[player.x-1][player.y] != WALL_ID){
                 player.x--;
+                player.stepsTaken++;
             }
         }
         else if(key == "d"){
-            if(player.x < 4 && currentRoom.grid[player.x+1][player.y] != 2){
+            if(player.x < numCells - 1 && currentRoom.grid[player.x+1][player.y] != WALL_ID){
                 player.x++;
+                player.stepsTaken++;
             }
         }
         // explosion destroys enemies / walls in neighboring cells
         else if(key == "f"){
             for(var i = player.x - 1; i < player.x + 2; i++){
                 for(var j = player.y - 1; j < player.y + 2; j++){
-                    if(i < 0 || j < 0 || i > 4 || j > 4){
+                    if(i < 0 || j < 0 || i > numCells - 1 || j > numCells - 1){
                         continue;
                     }
                     else{
-                        if(currentRoom.grid[i][j] == 1 || currentRoom.grid[i][j] == 2){
+                        if(currentRoom.grid[i][j] == ENEMY_ID){
                             currentRoom.grid[i][j] = 0;
+                            player.enemiesDefeated++;
+                        }
+                        else if(currentRoom.grid[i][j] == WALL_ID){
+                            currentRoom.grid[i][j] = 0;
+                            player.wallsDestroyed++;
                         }
                     }
                 }
@@ -62,11 +84,39 @@
         }
 
         // collided with enemy
-        if(currentRoom.grid[player.x][player.y] == 1){
+        if(currentRoom.grid[player.x][player.y] == ENEMY_ID){
             currentRoom.grid[player.x][player.y] = 0;
             player.decrementHealth();
         }
+        // collided with egg
+        else if(currentRoom.grid[player.x][player.y] == EGG_ID){
+            currentRoom.grid[player.x][player.y] = 0;
+            player.eggsCollected++;
+        }
+        // collided with door
+        else if(currentRoom.grid[player.x][player.y] == DOOR_ID){
+            // determine which direction the door leads to
+            if(player.x == 0){
+                console.log("MOVING WEST");
+                moveRooms(DIRECTION_WEST);
+            }
+            else if(player.x == numCells - 1){
+                console.log("MOVING EAST");
+                moveRooms(DIRECTION_EAST);
+            }
+            else if(player.y == 0){
+                console.log("MOVING NORTH");
+                moveRooms(DIRECTION_NORTH);
+            }
+            else{
+                console.log("MOVING SOUTH");
+                moveRooms(DIRECTION_SOUTH);
+            }
+        }
+        // process enemy moves
         updateRoom();
+
+        // 
         drawRoom();
     }
 
@@ -82,37 +132,90 @@
         // # eggs = [0, 3]
         var eggsPerRoom = Math.floor(Math.random()*4);
 
-        // # enemies = [0, 2]
-        var enemiesPerRoom = Math.floor(Math.random() * 3);
+        // # enemies = [0, numCells/3]
+        var enemiesPerRoom = Math.floor(Math.random() * numCells/3);
 
-        // # walls = [2, 5]
-        var wallsPerRoom = 2 + Math.floor((Math.random() * 4));
+        // # walls = [numCells*numCells/4, numCells*numCells/2]
+        var wallsPerRoom = numCells*numCells/4 + Math.floor((Math.random() * numCells*numCells/4));
 
-        // # doors = [0, 3] (entry door is overwritten upon transition from room to room)
-        var doorsPerRoom = Math.floor(Math.random() * 4);
+        // TODO: redo this to include the possibility of generating 3 additional doors in a room
+        // # doors = [1, 2] (entry door is overwritten upon transition from room to room)
+        var doorsPerRoom = 1 + Math.floor(Math.random() * 2);
+
+        // = total cells - sum of other entities (excluding player)
+        var spacesPerRoom = numCells*numCells - doorsPerRoom - wallsPerRoom - enemiesPerRoom - eggsPerRoom;
+
+        var entityArray = [spacesPerRoom, enemiesPerRoom, wallsPerRoom, eggsPerRoom];
+
+        // any number <= validEntityRange will be generated,
+        // any number > validEntityRange has already had its entity count assigned
+        var validEntityRange = 4;
 
         console.log("eggs " + eggsPerRoom);
         console.log("enemies " + enemiesPerRoom);
         console.log("walls " + wallsPerRoom);
         console.log("doors " + doorsPerRoom);
-        
-        // grid is initially a 5x5 grid
-        this.grid = new Array(5);
-        for(var i = 0; i < this.grid.length; i++){
-            this.grid[i] = new Array(5);
-            for(var j = 0; j < this.grid[i].length; j++){
+        console.log("spaces " + spacesPerRoom);
+
+        // room is a numCells x numCells grid
+        this.grid = new Array(numCells);
+        for(var i = 0; i < numCells; i++){
+            this.grid[i] = new Array(numCells);
+            // TODO: determine way to remove this
+            // TODO: only necessary to ensure every cell gets a value
+            // TODO: allow door cells to either contain a door or be empty
+            // NOTE: assign random entities as usual, but 
+            // NOTE: pass over door cells and iterate through entity count list
+            // NOTE: afterwards to assign blanks to cells still in cell list
+            for(var j = 0; j < numCells; j++){
                 this.grid[i][j] = 0;
             }
         }
-        this.grid[0][0] = 1;
-        this.grid[1][0] = 1;
+        // populate array of cells that need entity assigned to
+        var validCells = new Array(numCells*numCells);
+        for(var i = 0; i < validCells.length; i++){
+            validCells[i] = i;
+        }
+        // generate all spaces, then enemies, walls, eggs,
+        for(var entityID = 0; entityID < DOOR_ID; entityID++){
+            while(entityArray[entityID] > 0){
+                // random cell value where tens is x and ones is y in range [0, validCells.length]
+                var randomCellIndex = Math.floor(Math.random() * validCells.length);
+                var randomCellValue = validCells[randomCellIndex];
+                var xComponent = Math.floor(randomCellValue / 10);
+                var yComponent = randomCellValue % 10;
+                this.grid[Math.floor(xComponent)][yComponent] = entityID;
+                entityArray[entityID]--;
+                validCells[randomCellIndex] = validCells[validCells.length-1];
+                validCells.pop();
+            }
+        }
+
+        // then doors
+        // TODO: redo this for the possibility of four doors more elegantly
+        if(doorsPerRoom == 1){
+            this.grid[numCells/2][0] = DOOR_ID;
+            this.north = ROOM_NOT_DISCOVERED;
+        }
+        else if(doorsPerRoom == 2){
+            this.grid[numCells/2][0] = DOOR_ID;
+            this.north = ROOM_NOT_DISCOVERED;
+            this.grid[numCells-1][numCells/2] = DOOR_ID;
+            this.east = ROOM_NOT_DISCOVERED;
+        }
+
         console.log(this.grid);
+        player.roomsDiscovered++;
     }
 
     function Player(){
-        this.x = 2;
-        this.y = 2;
+        this.x = numCells/2;
+        this.y = numCells/2;
         this.eggsCollected = 0;
+        this.enemiesDefeated = 0;
+        this.wallsDestroyed = 0;
+        this.roomsDiscovered = 0;
+        this.stepsTaken = 0;
         this.health = 5;
         this.decrementHealth = function(){
             if(--this.health == 0){
@@ -123,6 +226,104 @@
 
     var player = new Player();
 
+    // draws room given starting (x,y), tileSize, and draw method parameters 
+    function drawMiniRoom(room, roomStartX, roomStartY, discovered){
+        for(var y = 0; y < numCells; y++){
+            var yPos = roomStartY + y*displayCellSize;
+            // skip this row if y pos out of bounds
+            if(yPos+displayCellSize < 0 || yPos > mapDisplayHeight){
+                continue;
+            }
+            for(var x = 0; x < numCells; x++){
+                var xPos = roomStartX + x*displayCellSize;
+                if(xPos+displayCellSize >= canvasWidth && xPos <= canvasWidth+HUDWidth){
+                    // if room exists but hasn't been discovered, draw gray box
+                    if(!discovered){
+                        frame.fillStyle = "gray";
+                        frame.fillRect(xPos, yPos, displayCellSize, displayCellSize);
+                    }
+                    // otherwise draw room details
+                    else{
+                        var entityID = room.grid[x][y];
+                        frame.fillStyle = floorColor;
+                        frame.fillRect(xPos, yPos, displayCellSize, displayCellSize);
+                        frame.fillStyle = "black";
+                        frame.strokeRect(xPos, yPos, displayCellSize, displayCellSize);
+                        if(entityID == ENEMY_ID){
+                            frame.fillStyle = enemyColor;
+                            frame.fillRect(xPos+(displayCellSize/6), yPos+(displayCellSize/6), displayCellSize-(displayCellSize/3), displayCellSize-(displayCellSize/3));
+                        }
+                        // wall in tile
+                        else if(entityID == WALL_ID){
+                            frame.fillStyle = wallColor;
+                            frame.fillRect(xPos, yPos, displayCellSize, displayCellSize);
+                        }
+                        // egg in tile
+                        else if(entityID == EGG_ID){
+                            frame.fillStyle = eggColor;
+                            frame.beginPath();
+                            frame.arc(xPos + (displayCellSize / 2), yPos + (displayCellSize / 2), displayCellSize / 4, 0, 2 * Math.PI);
+                            frame.fill();
+                            frame.fillStyle = "black";
+                            frame.stroke();
+                        }
+                        // door in tile
+                        else if(entityID == DOOR_ID){
+                            frame.fillStyle = doorColor;
+                            frame.fillRect(xPos + (displayCellSize / 8), yPos, 3*displayCellSize/4, displayCellSize);
+                            frame.fillStyle = "yellow";
+                            frame.beginPath();
+                            frame.arc(xPos + 5*displayCellSize / 8, yPos + displayCellSize / 2, displayCellSize / 8, displayCellSize / 8, 0, 2 * Math.PI);
+                            frame.fill();
+                            frame.fillStyle = "black";
+                            frame.stroke();
+                        }
+                    }
+                }
+            }
+        }
+
+        // finished drawing given room, now check to see if neighboring rooms need drawn
+        // calculate relative positions first if room exists, then recurse with new positions & visibility
+        var spaceBetweenRooms = displayCellSize / 2;
+        var neighboringRoomStartingX = 0;
+        var neighboringRoomStartingY = 0;
+
+        // TODO ensure only rooms that will be rendered are drawn - i.e. don't pass function
+        // TODO with room where every row / cell within drawMiniRoom will be continue'd over
+        if(room != null && room.west != null){
+            neighboringRoomStartingX = roomStartX - spaceBetweenRooms - displayCellSize*numCells;
+            neighboringRoomStartingY = roomStartY;
+            room.west.east = null;
+            drawMiniRoom(room.west, neighboringRoomStartingX, neighboringRoomStartingY, room.west != ROOM_NOT_DISCOVERED);
+            room.west.east = room;
+        }
+        if(room != null && room.east != null){
+            console.log(room + " " + room.east);
+            neighboringRoomStartingX = roomStartX + spaceBetweenRooms + displayCellSize*numCells;
+            neighboringRoomStartingY = roomStartY;
+            room.east.west = null;
+            drawMiniRoom(room.east, neighboringRoomStartingX, neighboringRoomStartingY, room.east != ROOM_NOT_DISCOVERED);
+            room.east.west = room;
+        }
+        if(room != null && room.north != null){
+            console.log(room + " " + room.north);
+            neighboringRoomStartingX = roomStartX;
+            neighboringRoomStartingY = roomStartY - spaceBetweenRooms - displayCellSize * numCells;
+            room.north.south = null;
+            drawMiniRoom(room.north, neighboringRoomStartingX, neighboringRoomStartingY, room.north != ROOM_NOT_DISCOVERED);
+            room.north.south = room;
+        }
+        if(room != null && room.south != null){
+            console.log(room + " " + room.south);
+            neighboringRoomStartingX = roomStartX;
+            neighboringRoomStartingY = roomStartY + spaceBetweenRooms + displayCellSize * numCells;
+            room.south.north = null;
+            drawMiniRoom(room.south, neighboringRoomStartingX, neighboringRoomStartingY, room.south != ROOM_NOT_DISCOVERED);
+            room.south.north = room;
+        }
+    }
+    
     function drawRoom(){
         frame.fillStyle = floorColor;
         frame.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -130,17 +331,17 @@
             for(var x = 0; x < currentRoom.grid[0].length; x++){
                 var entityID = currentRoom.grid[x][y];
                 // enemy in tile
-                if(entityID == 1){
+                if(entityID == ENEMY_ID){
                     frame.fillStyle = enemyColor;
                     frame.fillRect(x*cellSize+(cellSize/6), y*cellSize+(cellSize/6), cellSize-(cellSize/3), cellSize-(cellSize/3));
                 }
                 // wall in tile
-                else if(entityID == 2){
+                else if(entityID == WALL_ID){
                     frame.fillStyle = wallColor;
                     frame.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
                 }
                 // egg in tile
-                else if(entityID == 3){
+                else if(entityID == EGG_ID){
                     frame.fillStyle = eggColor;
                     frame.beginPath();
                     frame.arc(x*cellSize+ (cellSize / 2), y*cellSize + (cellSize / 2), cellSize / 4, 0, 2 * Math.PI);
@@ -149,7 +350,7 @@
                     frame.stroke();
                 }
                 // door in tile
-                else if(entityID == 4){
+                else if(entityID == DOOR_ID){
                     frame.fillStyle = doorColor;
                     frame.fillRect(x*cellSize+cellSize / 8, y*cellSize, 3*cellSize/4, cellSize);
                     frame.fillStyle = "yellow";
@@ -168,9 +369,10 @@
         frame.fillStyle = playerColor;
         frame.fillRect(player.x*cellSize+(cellSize/6), player.y*cellSize+(cellSize/6), cellSize-(cellSize/3), cellSize-(cellSize/3));
     }
+    
 
-    // inefficient as only enemies are updated yet entire n x n room is iterated through
-    // some enemies will move more than once as they move to an index that has yet to be checked
+
+    // inefficient as only enemies are updated yet entire numCells x numCells room is iterated through
     // horrible 'pathfinding' but it is just a demo after all
     function updateRoom(){
         var exclusionPoints = [];
@@ -179,8 +381,6 @@
                 var alreadyComputed = false;
                 for(var i = 0; i < exclusionPoints.length; i++){
                     if(exclusionPoints[i][0] == x && exclusionPoints[i][1] == y){
-                        console.log("ep: " + exclusionPoints[i]);
-                        console.log("x,y: " + [x, y]);
                         alreadyComputed = true;
                         break;
                     }
@@ -189,7 +389,7 @@
                     continue;
                 }
                 var entityID = currentRoom.grid[x][y];
-                if(entityID == 1){
+                if(entityID == ENEMY_ID){
                     var xDif = x - player.x;
                     var yDif = y - player.y;
                     // determine which direction to move
@@ -207,29 +407,29 @@
                                 // try backtracking in smaller direction first
                                 if(currentRoom.grid[x-xDelta][y] != 0){
                                     // finally, try backtracking in larger direction
-                                    if(currentRoom.grid[x][y-yDelta] != 0 ){
+                                    if(currentRoom.grid[x][y-yDelta] != 0){
                                         // incredible that you've gotten yourself into this situation. 
                                         // you don't deserve to move. 
                                         console.log("the immovable object");
                                         didntMove = true;
                                     }
                                     else{
-                                        currentRoom.grid[x][y-yDelta] = 1;
+                                        currentRoom.grid[x][y-yDelta] = ENEMY_ID;
                                         exclusionPoints.push([x, y-yDelta]);
                                     }
                                 }
                                 else{
-                                    currentRoom.grid[x-xDelta][y] = 1;
+                                    currentRoom.grid[x-xDelta][y] = ENEMY_ID;
                                     exclusionPoints.push([x-xDelta, y]);
                                 }
                             }
                             else{
-                                currentRoom.grid[x][y+yDelta] = 1;
+                                currentRoom.grid[x][y+yDelta] = ENEMY_ID;
                                 exclusionPoints.push([x, y+yDelta]);
                             }
                         }
                         else{
-                            currentRoom.grid[x+xDelta][y] = 1;
+                            currentRoom.grid[x+xDelta][y] = ENEMY_ID;
                             exclusionPoints.push([x+xDelta, y]);
                         }
                     }
@@ -249,31 +449,28 @@
                                         didntMove = true;
                                     }
                                     else{
-                                        currentRoom.grid[x-xDelta][y] = 1;
+                                        currentRoom.grid[x-xDelta][y] = ENEMY_ID;
                                         exclusionPoints.push([x-xDelta, y]);
                                     }
                                 }
                                 else{
-                                    currentRoom.grid[x][y-yDelta] = 1;
+                                    currentRoom.grid[x][y-yDelta] = ENEMY_ID;
                                     exclusionPoints.push([x, y-yDelta]);
                                 }
                             }
                             else{
-                                currentRoom.grid[x+xDelta][y] = 1;
+                                currentRoom.grid[x+xDelta][y] = ENEMY_ID;
                                 exclusionPoints.push([x+xDelta, y]);
                             }
                         }
                         else{
-                            console.log("moving down");
-                            currentRoom.grid[x][y+yDelta] = 1;
+                            currentRoom.grid[x][y+yDelta] = ENEMY_ID;
                             exclusionPoints.push([x, y+yDelta]);
                         }
                     }
                     if(!didntMove){
                         currentRoom.grid[x][y] = 0;
                         var updatedPosition = exclusionPoints[exclusionPoints.length -1];
-                        console.log("x,y: " + [x, y]);
-                        console.log(updatedPosition);
                         // check if enemy has collided with player
                         // if so, destroy enemy and decrement player health
                         if(updatedPosition[0] == player.x && updatedPosition[1] == player.y){
@@ -284,11 +481,114 @@
                 }
             }
         }
+        updateHUD();
     }
+
+    function updateHUD(){
+        frame.fillStyle = "#8ffff0";
+        frame.fillRect(canvasWidth, 0, canvasWidth + HUDWidth, canvasHeight);
+        frame.fillStyle = "black";
+        frame.fillRect(canvasWidth, mapDisplayHeight+10, canvasWidth + HUDWidth, 3);
+        frame.font = "16pt Arial";
+        frame.fillText("Health: " + player.health, canvasWidth, 230);
+        frame.font = "16pt Arial";
+        frame.fillText("Eggs collected: " + player.eggsCollected, canvasWidth, 260);
+        frame.fillText("Enemies defeated: " + player.enemiesDefeated, canvasWidth, 290);
+        frame.fillText("Walls destroyed: " + player.wallsDestroyed, canvasWidth, 320);
+        frame.fillText("Rooms discovered: " + player.roomsDiscovered, canvasWidth, 350);
+        frame.fillText("Steps taken: " + player.stepsTaken, canvasWidth, 380);
+
+        // directions
+        frame.fillText("Movement = WASD", canvasWidth, 410);
+        frame.fillText("1 block explosion = F", canvasWidth, 440);
+        frame.fillText("Black square = wall", canvasWidth, 470);
+        frame.fillText("Red square = enemy", canvasWidth, 500);
+        frame.fillText("White circle = egg", canvasWidth, 530);
+
+        // draw map display
+        // player is centered in middle of display
+        
+        var playerDisplayX = canvasWidth + HUDWidth/2 - displayCellSize/2;
+        var playerDisplayY = mapDisplayHeight/2 - displayCellSize/2;
+        
+        var roomStartDisplayX = playerDisplayX - player.x*displayCellSize; 
+        var roomStartDisplayY = playerDisplayY - player.y*displayCellSize;
+        
+        
+        // draw minimap
+        drawMiniRoom(currentRoom, roomStartDisplayX, roomStartDisplayY, true);
+        frame.fillStyle = playerColor;
+        frame.fillRect(playerDisplayX, playerDisplayY, displayCellSize, displayCellSize);
+    }
+
     currentRoom = new Room();
+    currentRoom.grid[player.x][player.y] = 0;
     drawRoom();
+    updateHUD();
+    
+    function moveRooms(direction){
+        var newRoom;
+        var newPlayerPosition = [0, 0];
+        console.log("moving " + direction);
+        // TODO: redo neighboring room adjacencies memoizationally
+        if(direction == DIRECTION_EAST){
+            console.log("MOVING EAST");
+            newRoom = currentRoom.east;
+            newPlayerPosition = [0, numCells / 2];
+        }
+        else if(direction == DIRECTION_NORTH){
+            newRoom = currentRoom.north;
+            console.log("MOVING NORTH");
+            newPlayerPosition = [numCells / 2, numCells - 1];
+        }
+        else if(direction == DIRECTION_WEST){
+            newRoom = currentRoom.west;
+            newPlayerPosition = [numCells - 1, numCells / 2];
+        }
+        else{
+            newRoom = currentRoom.south;
+            newPlayerPosition = [numCells / 2, 0];
+        }
+        // room has already been discovered
+        if(newRoom == ROOM_NOT_DISCOVERED){
+            // room has yet to be discovered - generate new room
+            newRoom = new Room();
+            console.log(" NEW ROOM GRID");
+            console.log(newRoom.grid);
+            if(direction == DIRECTION_EAST){
+                currentRoom.east = newRoom;
+                newRoom.west = currentRoom;
+            }
+            else if(direction == DIRECTION_NORTH){
+                currentRoom.north = newRoom;
+                newRoom.south = currentRoom;
+            }
+            else if(direction == DIRECTION_WEST){
+                currentRoom.west = newRoom;
+                newRoom.east = currentRoom;
+            }
+            else{
+                currentRoom.south = newRoom;
+                newRoom.north = currentRoom;
+            }
+        }
+        player.x = newPlayerPosition[0];
+        player.y = newPlayerPosition[1];
+        newRoom.grid[player.x][player.y] = DOOR_ID;
+        console.log(" CURRENT ");
+        console.log(currentRoom);
+        console.log(" NEW ");
+        console.log(newRoom);
+        currentRoom = newRoom;
+    }
     function gameOver(){
         canvas.remove();
-        document.write("game over");
+        document.write("<h1> Game Over</h1>");
+        document.write("<h3> Final Stats: </h3>");
+        document.write("Eggs collected: " + player.eggsCollected + "<br>");
+        document.write("Enemies defeated: " + player.enemiesDefeated + "<br>");
+        document.write("Walls destroyed: " + player.wallsDestroyed + "<br>");
+        document.write("Rooms discovered: " + player.roomsDiscovered + "<br>");
+        document.write("Steps taken: " + player.stepsTaken + "<br>");
     }
 </script>
