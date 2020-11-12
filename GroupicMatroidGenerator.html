@@ -1,0 +1,258 @@
+<html>
+    <title>
+        Groupic Matroid Generator
+    </title>
+
+    <body>
+        <label for="mod">Enter mod</label><br>
+        <input type="number" id = "mod" value = 1 min = 1 step = 1><br>
+
+        <input type="radio" id = "addition" name = "operator"> 
+        <label for="addition">Addition</label><br>
+
+        <input type="radio" id = "multiplication" name = "operator">
+        <label for="multiplication">Multiplication</label><br>
+
+        <input type="radio" id = "MG" name = "independence"> 
+        <label for="MG">Generate M(G)</label><br>
+
+        <input type="radio" id = "M*G" name = "independence">
+        <label for="M*G">Generate M*(G)</label><br>
+
+        <input type="button" id = "generateGroupicMatroid" value="Generate groupic matroid" onclick="generateGroupicMatroid()"><br><br>
+        <div id="results">
+
+        </div>
+
+        <script>
+            
+
+
+            function generateGroupicMatroid(){
+                let mod = document.getElementById("mod").value;
+                let operator = document.getElementById("addition").checked ? modAddition : document.getElementById("multiplication").checked ? modMultiplication : null;
+                let independence = document.getElementById("MG").checked ? MIndependenceNotion : document.getElementById("M*G").checked ? MStarIndependenceNotion : null;
+                let resultsDiv = document.getElementById("results");
+                if(isNaN(mod) || operator == null || independence == null){
+                    console.log("bad input");
+                    return;
+                }
+
+                // lame
+                let e = operator === modAddition ? 0 : 1;
+                let groundSet = [];
+                for(let i = 0; i < mod; i++){
+                    // eliminate identity and involutions for MIndependenceNotion
+                    if(independence === MIndependenceNotion){
+                        if( independence(i, i, mod, e, operator)){
+                            groundSet.push(parseInt(i));
+                        }
+                    }
+                    else{
+                        groundSet.push(parseInt(i));
+                    }
+                    
+                }
+                console.log("ground set");
+                console.log(groundSet);
+
+                /*
+                        some weird idea of trimming dependent elements, although this is
+                        not easily done with a variable independence notion...
+                
+                let independentElements = [];
+                for(val1 in groundSet){
+                    let independent = true;
+                    for(val2 in groundSet){
+                        if(!independence(val1, val2, mod, e, operator)){
+                            independent = false;
+                            break;
+                        }
+                    }
+                    if(independent){
+                        let dupe = false;
+                        for(val3 in independentElements){
+                            if(val3 == val1){
+                                dupe = true;
+                                break;
+                            }
+                        }
+                        if(!dupe){
+                            console.log(val1);
+                            independentElements.push(val1);
+                        }
+                    }
+                }
+                */
+                let independentCollection = [];
+                independentCollection.push([]);
+                let numberOrderOneElements = (mod - 2 + mod % 2);
+                let maxIndependentCollectionOrder = numberOrderOneElements / 2;
+                console.log("####");
+                console.log("collection before loop");
+                console.log(collectionAsString(independentCollection));
+                console.log("####");
+                
+                for(let index = 0; index < independentCollection.length; index++){
+                    console.log("####");
+                    console.log("collection at start of loop");
+                    console.log(collectionAsString(independentCollection));
+                    console.log("####");
+                    let set = independentCollection[index];
+                    /*
+                    console.log("#######");
+                    console.log("independent set");
+                    console.log(set);
+                    console.log("#######");
+                    */
+                    for(let groundSetIndex in groundSet){
+                        let unionedSet = union(set, groundSet[groundSetIndex]);
+                        console.log("unioned set:");
+                        console.log(unionedSet);
+                        if(independence === MIndependenceNotion){
+                            if(!setEquality(set, unionedSet) && isSetIndependent(unionedSet, independence, mod, e, operator) 
+                            && !isSetInCollection(unionedSet, independentCollection)){
+                                //console.log(collectionAsString(independentCollection));
+                                independentCollection.push(unionedSet);
+                                //console.log(collectionAsString(independentCollection));
+                            }
+                        }else{
+                            if(isSetIndependent(unionedSet, independence, mod, e, operator) 
+                            && !isSetInCollection(unionedSet, independentCollection)){
+                                console.log("yep");
+                                //console.log(collectionAsString(independentCollection));
+                                independentCollection.push(unionedSet);
+                                //console.log(collectionAsString(independentCollection));
+                            }
+                        }
+                        
+                    }
+                }
+                console.log("I = ");
+                console.log(collectionAsString(independentCollection));
+                console.log("|I| = " + independentCollection.length);
+                resultsDiv.innerHTML = "|I_Z("+mod+")| = " + independentCollection.length + "<br>" + "I_Z("+mod+") = " + collectionAsString(independentCollection);
+            }  
+
+            function isSetInCollection(set, collection){
+                /*
+                console.log("checking if");
+                console.log(collectionAsString(independentCollection));
+                console.log("in");
+                console.log(collectionAsString(independentCollection));
+                */
+                for(let setIndex = 0; setIndex < collection.length; setIndex++){
+                    let testSet = collection[setIndex];
+                    if(setEquality(set, testSet)){
+                        /*
+                        console.log(set);
+                        console.log("in");
+                        console.log(collectionAsString(independentCollection));
+                        */
+                        return true;
+                    }
+                }
+                /*
+                console.log(set);
+                console.log("not in");
+                console.log(collectionAsString(independentCollection));
+                */
+                return false;
+            }
+
+            function collectionAsString(collection){
+                // TODO print all elements of collection for realtime debugging
+                let result = "{";
+                for(let x in collection){
+                    if(collection[x] == ""){
+                        result += "{}, ";
+                    }else{
+                        result += "{"+collection[x]+"}, ";
+                    }
+                }
+                result += "}";
+                return result;
+            }
+
+            function isSetIndependent(set, independenceFunction, mod, identity, operator){
+                //console.log("checking if set is independent");
+                for(let index1 = 0; index1 < set.length; index1++){
+                    let val1 = set[index1];
+                    let index2 = independenceFunction === MIndependenceNotion ? index1 : index1 + 1;
+                    for(index2; index2 < set.length; index2++){
+                        let val2 = set[index2];
+                        if(!independenceFunction(val1, val2, mod, identity, operator)){
+                            //console.log(val1 + " " + val2 + " dependent pair");
+                            return false;
+                        }
+                    }
+                }
+                //console.log(set);
+                //console.log("is independent");
+                return true;
+            }
+
+            function union(set, val){
+                let copy = [];
+                for(let i = 0; i < set.length; i++){
+                    copy.push(set[i]);
+                }
+                for(let x = 0; x < set.length; x++){
+                    let y = set[x];
+                    if(y == val){
+                        return set;
+                    }
+                }
+                copy.push(parseInt(val));
+                return copy;
+            }
+
+            function setEquality(A, B){
+                /*
+                console.log("checking if set");
+                console.log(A);
+                console.log("equals");
+                console.log(B);
+                */
+                if(A.length != B.length){
+                    //console.log("set equality false, order difference");
+                    return false;
+                }
+                let count = {};
+                for(let index = 0; index < A.length; index++){
+                    count[A[index]] = count[A[index]] != null ? count[A[index]]+1 : 1; 
+                    count[B[index]] = count[B[index]] != null ? count[B[index]]+1 : 1;  
+                    //console.log(count);
+                }
+                let keys = Object.keys(count);
+                for(key in keys){
+                    if(count[keys[key]] != 2){
+                        //console.log("count[" + keys[key] + "] " + "= " + count[keys[key]]);
+                        //console.log("set equality false, same order, different elements");
+                        return false;
+                    }
+                }
+                //console.log("set equality true");
+                //console.log("");
+                return true;
+            }
+
+            function MIndependenceNotion(a, b, mod, identity, op){
+                return op(a,b, mod) != identity;
+            }
+
+            function MStarIndependenceNotion(a, b, mod, identity, op){
+                return op(a,b, mod) != identity;
+            }
+
+            function modAddition(a, b, n){
+                return  (a + b) % n;
+            }
+
+            function modMultiplication(a, b, n){
+                return (a * b) % n;
+            }
+
+        </script>
+    </body>
+</html>
