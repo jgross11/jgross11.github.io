@@ -1,0 +1,379 @@
+<html>
+    <h1>
+        Reliability Calculator
+    </h1>
+    <canvas oncontextmenu="return false;" id="canvasRef" style="border: 1px solid black"></canvas>
+    <div id="result">
+        
+    </div>
+</html>
+
+<script>
+    var canvasWidth = 750;
+    var canvasHeight = 600;
+    var GUIWidth = 150;
+    var vertexRadius = 25;
+    var canvas = document.getElementById("canvasRef");
+    var frame = canvas.getContext("2d");
+    var canvasXOffset = Math.round(canvas.getBoundingClientRect().left);
+    var canvasYOffset = Math.round(canvas.getBoundingClientRect().top);
+    var mouseX, mouseY;
+    var buttonList = [];
+    var vertexList = [];
+    var rootVertice = null;
+    var numVertices = 0;
+    var selectedVertice = null;
+    var endVertice = null;
+    canvas.height = canvasHeight;
+    canvas.width = canvasWidth + GUIWidth;
+    canvas.addEventListener("mousedown", this.onClick, false);
+
+    setup();
+
+    function Node(x, y, name){
+        this.value = 0;
+        this.list = [];
+        this.x = x;
+        this.y = y;
+        this.name = String.fromCharCode(name);
+        function setNodeAtIndex(node, index){
+            this.list[index] = node;
+        }
+    }
+
+    function Button(x, y, xSize, ySize, text){
+        this.x = x;
+        this.y = y;
+        this.xSize = xSize;
+        this.ySize = ySize;
+        this.text = text;
+        this.click = function(){
+            console.log("GENERIC FUNCTION IN NEED OF OVERRIDING");
+        }
+        this.draw = function(){
+            console.log("GENERIC FUNCTION IN NEED OF OVERRIDING");
+        }
+    }
+
+    function onClick(event){
+        var mouseButtonPressed = event.button;
+        mouseX = event.clientX - canvasXOffset;
+        mouseY = event.clientY - canvasYOffset;
+
+        // click within graph space
+        if(mouseX < canvasWidth - 25){
+            // check vertice selection
+            for(var i = 0; i < vertexList.length; i++){
+                var vertex = vertexList[i];
+                
+                // vertex was clicked on
+                if(vertex.x - vertexRadius < mouseX && mouseX < vertex.x + vertexRadius && vertex.y - vertexRadius < mouseY && mouseY < vertex.y + vertexRadius){
+                    // left mouse button selects vertex
+                    if(mouseButtonPressed == 0){
+                        // select vertice
+                        if(selectedVertice == null){
+                            selectedVertice = vertex;
+                        }
+                        // attempting to create edge from one vertice to another
+                        else if(selectedVertice != vertex){
+                            var edgeExists = false;
+                            var greaterListLength = selectedVertice.list.length > vertex.list.length ? selectedVertice.list.length : vertex.list.length;
+                            for(var i = 0; i < greaterListLength; i++){
+                                if((selectedVertice.list[i] != null && selectedVertice.list[i] == vertex) || (vertex.list[i] != null && vertex.list[i] == selectedVertice)){
+                                    edgeExists = true;
+                                }
+                            }
+                            if(!edgeExists){
+                                selectedVertice.list.push(vertex);
+                                selectedVertice = null;
+                            }
+                        }
+                    }
+
+                    // right mouse button removes vertex from list
+                    else if(mouseButtonPressed == 2){
+                        if(selectedVertice == vertex){
+                            selectedVertice = null;
+                        }
+                        // remove to-be-deleted vertex from other vertices' lists
+                        for(var j = 0; j < vertexList.length; j++){
+                            var previousVertex = vertexList[j];
+                            for(var w = 0; w < previousVertex.list.length; w++){
+                                if(previousVertex.list[w] == vertex){
+                                    var temp = previousVertex.list[w];
+                                    previousVertex.list[w] = previousVertex.list[previousVertex.list.length-1];
+                                    previousVertex.list[previousVertex.list.length-1] = temp;
+                                    previousVertex.list.pop();
+                                }
+                            }
+                        }
+                        
+                        // update vertex names 
+                        for(var k = i; k < vertexList.length-1; k++){
+                            vertexList[k] = vertexList[k+1];
+                            vertexList[k].name = (String.fromCharCode(97+k));
+                        }
+                        vertexList.pop();
+                        numVertices--;
+
+                        if(vertexList.length == 0){
+                            numVertices = 0;
+                        }
+                    }
+                    draw();
+                    return;
+                }
+            }
+
+            // create vertex otherwise
+            if(mouseButtonPressed == 0 && selectedVertice == null){
+                vertexList.push(new Node(mouseX, mouseY, 97+numVertices));
+                numVertices++;
+            }
+            else{
+                selectedVertice = null;
+            }
+        }
+
+        // click within menu space
+        else{
+        // check button presses
+            for(var i = 0; i < buttonList.length; i++){
+                var button = buttonList[i];
+                if( (button.x < mouseX && mouseX < button.x + button.xSize) && (button.y < mouseY && mouseY < button.y + button.ySize)){
+                    button.click();
+                }
+            }
+        }
+        draw();
+    }
+
+    function setup(){
+        
+        var solveButton = new Button(canvasWidth + GUIWidth/8, 170, 100, 20, "Solve");
+        
+        // when trying to solve, call simply on first vertex until last vertex
+        solveButton.click = function(){
+            simplify(vertexList[0], vertexList[vertexList.length-1]);
+            document.getElementById("result").innerHTML = "Final operation: P(G) = " + vertexList[0].name;
+        }
+        solveButton.draw = function(){
+            frame.fillStyle = numVertices > 0 ? "white" : "gray";
+            frame.fillRect(this.x, this.y, this.xSize, this.ySize);
+            frame.strokeRect(this.x, this.y, this.xSize, this.ySize);
+            frame.fillStyle = "black";
+            frame.fillText(this.text, this.x+this.xSize/3, this.y+3*this.ySize/4);
+        }
+        buttonList.push(solveButton);
+        draw();
+    }
+
+    function draw(){
+        frame.fillStyle = "white";
+        frame.fillRect(0, 0, canvasWidth + GUIWidth, canvasHeight);
+        frame.fillStyle = "black";
+        frame.strokeStyle = "black";
+        frame.fillRect(canvasWidth, 0, 5, canvasHeight);
+        frame.font = "15px Georgia";
+        // draw buttons
+        for(var i = 0; i < buttonList.length; i++){
+            buttonList[i].draw();
+        }
+
+        // draw nodes
+        for(var i = 0; i < vertexList.length; i++){
+            var vertex = vertexList[i];
+            frame.beginPath();
+            frame.arc(vertex.x, vertex.y, vertexRadius, 0, 2 * Math.PI);
+            frame.fillStyle = (selectedVertice == vertex) ? "grey" : "white";
+            frame.fill();
+            frame.strokeStyle = "black";
+            frame.stroke();
+
+            // draw edges between nodes
+            for(var j = 0; j < vertex.list.length; j++){
+                frame.beginPath();
+                frame.moveTo(vertex.x, vertex.y);
+                frame.lineTo(vertex.list[j].x, vertex.list[j].y);
+                frame.stroke();
+            }
+
+            // draw node name
+            frame.strokeText(vertex.name, vertex.x - vertexRadius / 5, vertex.y - vertexRadius - vertexRadius / 5);
+        }
+    }
+
+    // finds first common vertex between adjacent vertices
+    function findFCV(currentNode){
+        // return null if no more nodes 
+        if(currentNode.list.length < 1) return null;
+
+        // return the next node if this node only has one node attached
+        if(currentNode.list.length == 1) return currentNode.list[0];
+
+        // otherwise, simplest case is:
+        /*
+          o
+         / \
+        o-o-o (with a variable amount of middle nodes)
+         \ / 
+          o
+        */
+
+        // map of all vertices found while traversing path
+        // FCV is first vertice found currentNode.list.length times
+        let allVerticesMap = {};
+
+        // list containing vertices currently being examined / traversed
+        let verticeTraversingList = [];
+
+        // number of occurences necessary for a node to be FCV
+        let FCVMinimum = currentNode.list.length;
+
+        // add all one-edge vertices to traversal list
+        console.log("verticeTraversalList");
+        for (let i = 0; i < currentNode.list.length; i++){
+            verticeTraversingList[i] = currentNode.list[i];
+            console.log(verticeTraversingList[i]);
+        }
+    
+        // while FCVMinimum hasn't been achieved or end of graph hasn't been reached, iterate by one node
+        // for each vertice in traversal list and place / increment its count in the map
+        let FCVFound = false;
+        let endOfGraphReached = false;
+        let endNodesCount = 0;
+        while(!FCVFound && !endOfGraphReached){
+            endNodesCount = 0;
+            for(let index in verticeTraversingList){
+                // current vertice in 'index'th path
+                let vert = verticeTraversingList[index];
+
+                console.log("currently traversing node " + vert.name);
+
+                // if vert is null or has no connections, increment endOfGraphCounter and go to next vert
+                if(vert == null || vert.list.length == 0){
+                    endNodesCount++;
+                    continue;
+                }
+
+                // if this vertice itself has branching paths, handle that...
+
+
+                // otherwise it only has one connection, update map and list reference
+                let nextNode = vert.list[0];
+
+                console.log("next node = " + nextNode.name);
+                // increment node counter in map if not new, otherwise create map entry with count 1 
+                allVerticesMap[nextNode.name] = allVerticesMap[nextNode.name] == null ? 1 : allVerticesMap[nextNode.name]+1;
+
+                // check if FCV count has been reached
+                if(allVerticesMap[nextNode.name] == verticeTraversingList.length){
+                    console.log("found FCV: " + nextNode.name);
+                    return nextNode;
+                }
+                verticeTraversingList[index] = nextNode;
+            }
+            if(endNodesCount == verticeTraversingList.length){
+                endOfGraphReached = true;
+            }
+        }
+
+    }
+    
+    function simplify(startNode, endNode, isExclusive){
+        
+        // cannot simplify a single node
+        if(startNode == endNode){
+            return;
+        }
+
+        var currentNode = startNode;
+        while(currentNode.list[0] != null){
+            // nothing to simplify if nothing is connected to node
+            // or only connection is endNode, and this isn't the case where
+            // startNode = start of graph; endNode = end of graph
+            if(currentNode.list.length == 0 || (isExclusive && currentNode.list[0] == endNode)){
+                break;
+            }
+
+            // serial connection
+            // 
+            else if(currentNode.list.length == 1){
+                console.log("serial connection between " + currentNode.name + " and " + currentNode.list[0].name);
+                currentNode.name = currentNode.name + "*" + currentNode.list[0].name;
+                let temp = currentNode.list[0];
+                currentNode.list = temp.list;
+                vertexList.splice(vertexList.indexOf(temp), 1);
+                console.log("results in combined node " + currentNode.name);
+            }
+            
+            // parallel connection
+            else{
+
+                // find first common vertex among branching vertices
+                var fcv = findFCV(currentNode);
+
+                console.log("first common vertex");
+                console.log(fcv);
+
+                // simplify each branching vertice starting from itself until the first common vertex
+                for(var i = 0; i < currentNode.list.length; i++){
+                    simplify(currentNode.list[i], fcv, true);
+                }
+
+                /* should be left with something like
+                      o
+                     / \
+                    o-o-o (with a variable amount of middle nodes)
+                     \ / 
+                      o
+                    
+                */
+                // create direct link between leftmost and rightmost node in above image
+                // create parallel string and remove all connections from the current node
+                // except for the one just described
+                currentNode.list[currentNode.list.length] = currentNode.list[0].list[0];
+                console.log("parallel connection starting at node " + currentNode.name + " and ");
+                
+                for(idx in currentNode.list){
+                    console.log(currentNode.list[idx].name);
+                }
+                var nameString = "(1-(";
+                for(var i = 0; i < currentNode.list.length-1; ){
+                   /* 
+                    console.log("Before splicing, node list is ");
+                    for(idx in currentNode.list){
+                        console.log(currentNode.list[idx].name);
+                    }
+                    */
+                    nameString += "(1-" + currentNode.list[i].name + ")";
+                    vertexList.splice(vertexList.indexOf(currentNode.list[i]), 1);
+                    currentNode.list.shift();
+                    /*
+                    console.log("After splicing, node list is ");
+                    for(idx in currentNode.list){
+                        console.log(currentNode.list[idx].name);
+                    }
+                    */
+                }
+                nameString += "))";
+                let parallelCombinationNode = new Node((currentNode.x + currentNode.list[0].x) / 2, (currentNode.y + currentNode.list[0].y) / 2, null);
+                parallelCombinationNode.name = nameString;
+                let FCVNode = currentNode.list[0];
+                currentNode.list[0] = parallelCombinationNode;
+                parallelCombinationNode.list[0] = FCVNode;
+                vertexList.splice(vertexList.indexOf(currentNode)+2, 0, parallelCombinationNode);
+
+                // remove all processed nodes from vertexList
+            }
+
+            console.log("After simplification, vertex list is ");
+            for(idx in vertexList){
+                console.log(vertexList[idx].name);
+            }
+            
+        }
+    }
+    
+
+</script>
