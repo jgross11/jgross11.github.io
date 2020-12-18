@@ -1,0 +1,98 @@
+<html>
+    <title>Genetic Algorithm Test</title>
+    <body>
+        <div id="header">
+            Demonstrates the finding of an optimal solution of the formula: <br>
+            x + y = 7 <br>
+            where 0 < x, y < 7, using a truncation breeding-based genetic algorithm.<br>
+        </div>
+        <div id="previousBest"></div>
+        <br>
+        <div id="rawData"></div>
+    </body>
+    <script>
+        let numberOfSpecimen = 10;
+        let numberOfGenerations = 100;
+        let population = [];
+        let mutationRate = 0.25;
+        let truncationRate = 0.1;
+        let minimalAcceptedFitness = 0.99;
+        Run();
+        function Run(){
+
+            // div references
+            let resultsDiv = document.getElementById("rawData");
+            let bestDiv = document.getElementById("previousBest");
+
+            // initialize population
+            for(let i = 0; i < numberOfSpecimen; i++){
+                // give random traits
+                population[i] = {x: createNewTrait(), y: createNewTrait()};
+
+                // calculate initial fitnesses
+                population[i].fitness = evaluate(population[i]);
+            }
+
+            // sort by fitness
+            SortByFitness();
+
+            // append current best to best list
+            bestDiv.innerHTML += "<br>Best of generation 1: <br>";
+            bestDiv.innerHTML += "x: " + population[0].x + " | y: " + population[0].y + " | x + y = " + (population[0].x + population[0].y) + " | fitness: " + population[0].fitness + "<br>";
+            resultsDiv.innerHTML += "Raw data for generation 1<br>";
+            printPopulation(resultsDiv);
+
+            let genCount = 1;
+            let lastKeeperIndex = Math.round(truncationRate * numberOfSpecimen);
+            while(genCount < numberOfGenerations &&  population[0].fitness < minimalAcceptedFitness){
+
+                // breed next generation
+                for(let i = lastKeeperIndex; i < numberOfSpecimen; i++){
+                    population[i] = breed(population[Math.round(Math.random()*lastKeeperIndex)], population[Math.round(Math.random()*lastKeeperIndex)]);
+                }
+
+                // sort by fitness
+                SortByFitness();
+
+                // append current best to best list
+                bestDiv.innerHTML += "<br>Best of generation "+(genCount+1)+": <br>";
+                bestDiv.innerHTML += "x: " + population[0].x + " | y: " + population[0].y + " | x + y = " + (population[0].x + population[0].y) + " | fitness: " + population[0].fitness + "<br>";
+
+                resultsDiv.innerHTML += "<br>Raw data for generation " + (genCount+1)+"<br>";
+                printPopulation(resultsDiv);
+
+                // increment gen count
+                genCount++;
+            }
+        }
+
+        function printPopulation(div){
+            for(let w in population){
+                div.innerHTML += "x: " + population[w].x + " | y: " + population[w].y + " | x + y = " + (population[w].x + population[w].y) + " | fitness: " + population[w].fitness + "<br>";
+            }
+        }
+
+        function SortByFitness(){
+            population.sort(function(a, b){
+                return b.fitness - a.fitness;
+            });
+        }
+
+        function createNewTrait(){
+            return Math.random()*4;
+        }
+
+
+        function breed(p1, p2){
+            let child = {
+                x: Math.random() <= mutationRate ?  createNewTrait() : Math.random() < 0.5 ? p1.x : p2.x,
+                y: Math.random() <= mutationRate ?  createNewTrait() : Math.random() < 0.5 ? p1.y : p2.y,
+            };
+            child.fitness = evaluate(child);
+            return child;
+        }
+        function evaluate(specimen){
+            return 1 / (Math.abs(7 - specimen.x - specimen.y) + 1)
+        }
+    </script>
+</html>
