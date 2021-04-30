@@ -12,12 +12,15 @@
     let BOARD_PRIMARY_COLOR = [25, 25, 125];
     let colors = [WHITE_COLOR, BOARD_PRIMARY_COLOR];
     let pieceImages = [new Array(6), new Array(6)];
+    let live = true;
 
     function preload(){
-        Object.keys(pieceIndices).forEach((index) =>{
-            pieceImages[WHITE][index] = loadImage('./assets/chess/white_'+pieceNames[index]+'.png');
-            pieceImages[BLACK][index] = loadImage('./assets/chess/black_'+pieceNames[index]+'.png');
-        });
+        if(live){
+            for(let i = PAWN_PIECE; i <= KING_PIECE; i++){
+                pieceImages[PIECE_WHITE][i] = loadImage('./assets/chess/white_'+pieceNames[i]+'.png');
+                pieceImages[PIECE_BLACK][i] = loadImage('./assets/chess/black_'+pieceNames[i]+'.png');
+            }
+        }
     }
 
     function setup(){
@@ -33,9 +36,12 @@
         stroke(BLACK_COLOR);
         for(let x = 0; x < BOARD_WIDTH; x++){
             for(let y = 0; y < BOARD_HEIGHT; y++){
-                fill(colors[(x+y)%2]);
-                square(tileSize * x, tileSize * y, tileSize);
-                drwaImage();
+                fill(colors[(x+y+1)%2]);
+                square(tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize);
+                if(game.board[x][y] !== null){
+                    let piece = game.board[x][y];
+                    image(pieceImages[piece.color][piece.type], tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize, tileSize);
+                }
             }
         }
     }

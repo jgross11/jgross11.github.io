@@ -1,27 +1,19 @@
 let BOARD_WIDTH = 8;
 let BOARD_HEIGHT = 8;
-let WHITE = 0;
-let BLACK = 1;
 
-let pieceIndices = {
-    PAWN: 0,
-    KNIGHT: 1,
-    ROOK: 2,
-    BISHOP: 3, 
-    QUEEN: 4,
-    KING: 5
-}
+let PIECE_WHITE = 0;
+let PIECE_BLACK = 1;
 
-console.log(pieceIndices);
+let PAWN_PIECE = 0;
+let KNIGHT_PIECE = 1;
+let ROOK_PIECE = 2;
+let BISHOP_PIECE = 3;
+let QUEEN_PIECE = 4;
+let KING_PIECE = 5;
 
-let pieceNames = {
-    PAWN: "pawn",
-    KNIGHT: "knight",
-    ROOK: "rook",
-    BISHOP: "bishop", 
-    QUEEN: "queen",
-    KING: "king"
-}
+let notationStrings = ["", "N", "R", "B", "Q", "K"];
+
+let pieceNames = ["pawn", "knight", "rook", "bishop", "queen", "king"];
 
 class Game{
     constructor(){
@@ -31,11 +23,11 @@ class Game{
         for(let i = 0; i < BOARD_WIDTH; i++){
             this.board[i] = new Array(BOARD_HEIGHT);
             for(let j = 0; j < BOARD_HEIGHT; j++){
-                this.board[i][j] = [0, 0];
+                this.board[i][j] = null;
             }
         }
 
-        this.pieces = [new Array(16), new Array(16)];
+        this.populateBoard();
 
         // init player names
         this.playerOne = "set";
@@ -45,12 +37,17 @@ class Game{
         this.moves = [];
 
         // init turn
-        this.turn = WHITE;
+        this.turn = PIECE_WHITE;
 
         // init turn number
         this.turnNumber = 1;
+    }
 
-
+    populateBoard(){
+        for(let i = 0; i < BOARD_WIDTH; i++){
+            board[1][i] = {color: PIECE_WHITE, type: PAWN_PIECE};
+            board[7][i] = {color: PIECE_BLACK, type: PAWN_PIECE};
+        }
     }
 }
 
@@ -71,8 +68,12 @@ class Pawn extends Piece{
         super(color);
         this.notationString = "";
         this.name = "pawn";
+        this.movedOnce = false;
     }
-    canMoveTo(board, currentX, currentY, moveToX, moveToY){
-        return true;
+    canMoveTo(xDif, yDif){
+        if(xDif == 1 || xDif == -1)
+        if(this.movedOnce){
+            
+        }
     }
 }
