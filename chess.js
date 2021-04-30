@@ -45,9 +45,28 @@ class Game{
 
     populateBoard(){
         for(let i = 0; i < BOARD_WIDTH; i++){
-            board[1][i] = {color: PIECE_WHITE, type: PAWN_PIECE};
-            board[7][i] = {color: PIECE_BLACK, type: PAWN_PIECE};
+            this.board[i][1] = {color: PIECE_WHITE, type: PAWN_PIECE};
+            this.board[i][6] = {color: PIECE_BLACK, type: PAWN_PIECE};
         }
+        this.board[0][0] = {color: PIECE_WHITE, type: ROOK_PIECE};
+        this.board[7][0] = {color: PIECE_WHITE, type: ROOK_PIECE};
+        this.board[0][7] = {color: PIECE_BLACK, type: ROOK_PIECE};
+        this.board[7][7] = {color: PIECE_BLACK, type: ROOK_PIECE};
+
+        this.board[1][0] = {color: PIECE_WHITE, type: KNIGHT_PIECE};
+        this.board[6][0] = {color: PIECE_WHITE, type: KNIGHT_PIECE};
+        this.board[1][7] = {color: PIECE_BLACK, type: KNIGHT_PIECE};
+        this.board[6][7] = {color: PIECE_BLACK, type: KNIGHT_PIECE};
+
+        this.board[2][0] = {color: PIECE_WHITE, type: BISHOP_PIECE};
+        this.board[5][0] = {color: PIECE_WHITE, type: BISHOP_PIECE};
+        this.board[2][7] = {color: PIECE_BLACK, type: BISHOP_PIECE};
+        this.board[5][7] = {color: PIECE_BLACK, type: BISHOP_PIECE};
+
+        this.board[3][0] = {color: PIECE_WHITE, type: QUEEN_PIECE};
+        this.board[4][0] = {color: PIECE_WHITE, type: KING_PIECE};
+        this.board[3][7] = {color: PIECE_BLACK, type: QUEEN_PIECE};
+        this.board[4][7] = {color: PIECE_BLACK, type: KING_PIECE};
     }
 }
 

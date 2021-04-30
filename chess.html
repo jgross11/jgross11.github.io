@@ -12,7 +12,15 @@
     let BOARD_PRIMARY_COLOR = [25, 25, 125];
     let colors = [WHITE_COLOR, BOARD_PRIMARY_COLOR];
     let pieceImages = [new Array(6), new Array(6)];
-    let live = true;
+    let pieceColors = [
+        {r: 255, g: 0, b: 0},
+        {r: 255, g: 255, b: 0},
+        {r: 0, g: 255, b: 0},
+        {r: 255, g: 0, b: 255},
+        {r: 0, g: 0, b: 255},
+        {r: 0, g: 255, b: 255}
+    ];
+    let live = false;
 
     function preload(){
         if(live){
@@ -34,13 +42,18 @@
 
     function drawBoard(){
         stroke(BLACK_COLOR);
-        for(let x = 0; x < BOARD_WIDTH; x++){
-            for(let y = 0; y < BOARD_HEIGHT; y++){
+        for(let y = 0; y < BOARD_HEIGHT; y++){
+            for(let x = 0; x < BOARD_WIDTH; x++){
                 fill(colors[(x+y+1)%2]);
                 square(tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize);
                 if(game.board[x][y] !== null){
                     let piece = game.board[x][y];
-                    image(pieceImages[piece.color][piece.type], tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize, tileSize);
+                    if(live) image(pieceImages[piece.color][piece.type], tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize, tileSize);
+                    else{
+                        let color = pieceColors[piece.type];
+                        fill(color.r, color.g, color.b);
+                        square(tileSize * x, GAME_HEIGHT - tileSize - tileSize * y, tileSize, tileSize);
+                    }
                 }
             }
         }
