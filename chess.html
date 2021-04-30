@@ -15,8 +15,8 @@
 
     function preload(){
         Object.keys(pieceIndices).forEach((index) =>{
-            pieceImages[WHITE][val] = loadImage('./assets/chess/white_'+pieceNames[index]+'.png');
-            pieceImages[BLACK][val] = loadImage('./assets/chess/black_'+pieceNames[index]+'.png');
+            pieceImages[WHITE][index] = loadImage('./assets/chess/white_'+pieceNames[index]+'.png');
+            pieceImages[BLACK][index] = loadImage('./assets/chess/black_'+pieceNames[index]+'.png');
         });
     }
 
