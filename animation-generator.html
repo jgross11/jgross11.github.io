@@ -1,0 +1,75 @@
+<html>
+    <title>
+        Animation Code Generator
+    </title>
+    <body>
+        <p><a href="https://bit.ly/37aNAOH">tyvm</a></p>
+        <label for="numFrames">Number of frames:</label>
+        <input type="number" id="numFrames" name="numFrames" min="1" step="1" value="38"><br>
+        <label for="framesRow">Frames per row:</label>
+        <input type="number" id="framesRow" name="framesRow" min="1" step="1" value="8"><br>
+        <label for="yPadding">Y-padding per row:</label>
+        <input type="number" id="yPadding" name="yPadding" min="1" step="1" value="2"><br>
+        <label for="yStart">Starting Y:</label>
+        <input type="number" id="yStart" name="yStart" min="0" step="1" value="1"><br>
+        <label for="xConstant">X Constant(?):</label>
+        <input type="number" id="xConstant" name="xConstant" step="1" value="32"><br>
+        <label for="yConstant">Y Constant(?):</label>
+        <input type="number" id="yConstant" name="yConstant" step="1" value="48"><br>
+        <input type="button" value="Generate Animation Code" onclick="generate()"><br><br>
+        Result: <br><br>
+        <div id="result"></div>
+    </body>
+</html>
+<script>
+
+    function generate(){
+        let numFrames = parseInt(document.getElementById("numFrames").value);
+        if(isNaN(numFrames)) 
+        {
+            document.getElementById("numFrames").value = 38;
+            numFrames = 38;
+        }
+        let framesPerRow = parseInt(document.getElementById("framesRow").value);
+        if(isNaN(framesPerRow)) 
+        {
+            document.getElementById("framesRow").value = 8;
+            framesPerRow = 8;
+        }
+        let yPadding = parseInt(document.getElementById("yPadding").value);
+        if(isNaN(yPadding)) 
+        {
+            document.getElementById("yPadding").value = 2;
+            yPadding = 2;
+        }
+        let yStart = parseInt(document.getElementById("yStart").value);
+        if(isNaN(yStart)) 
+        {
+            document.getElementById("yStart").value = 1;
+            yStart = 1;
+        }
+        let xConstant = parseInt(document.getElementById("xConstant").value);
+        if(isNaN(xConstant)) 
+        {
+            document.getElementById("xConstant").value = 32;
+            xConstant = 32;
+        }
+        let yConstant = parseInt(document.getElementById("yConstant").value);
+        if(isNaN(yConstant)) 
+        {
+            document.getElementById("yConstant").value = 48;
+            yConstant = 48;
+        }
+        let resultString = "";
+        for(let i = 0; i < numFrames; i++){
+            resultString += "player_image["+i+"] = ss.grabImage("+((i%framesPerRow)+1)+", "+(yStart+yPadding*Math.floor((i/framesPerRow)))+", "+xConstant+", "+yConstant+");\n"
+        }
+        resultString += "\nanim = new Animation(1, ";
+        for(let i = 0; i < numFrames-1; i++){
+            resultString += "player_image["+i+"], ";
+        }
+        resultString += "player_image["+(numFrames-1)+"]);";
+        document.getElementById("result").innerText = resultString;
+    }
+    generate();
+</script>
