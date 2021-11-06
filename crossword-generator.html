@@ -1,0 +1,272 @@
+
+
+<body>
+    Enter words to place in crossword, comma separated<br>
+    <input id="words" type="text" placeholder="Enter words here" value="this,is,a,test"><br>
+    
+    Enter board dimensions<br>
+    X: <input id="xDim" type="number" min=1 step=1 value=4> Y: <input id="yDim" type="number" min=1 step=1 value=4> <br>
+
+    <input type="button" value="Generate Crossword" onclick="rework()">
+    <div id="crossword-container">
+
+    </div>
+
+    <div id="log-spew">
+    
+    </div>
+</body>
+
+<script>
+    class Board{
+        directions = [
+            [0, 1],
+            [-1, 1],
+            [-1, 0],
+            [-1, -1],
+            [0, -1],
+            [1, -1],
+            [1, 0],
+            [1, 1]
+        ];
+
+        constructor(height, width){
+            this.height = height;
+            this.width = width;
+            this.logs = '';
+            this.log(`Initializing a ${width}x${height} board`);
+            this.contents = new Array(width);
+            for(let i = 0; i < height; i++){
+                this.contents[i] = new Array(height);
+            }
+            this.fill();
+        }
+
+        fill = () => {
+            this.log('Filling board with #s');
+            for(let x = 0; x < this.width; x++){
+                for(let y = 0; y < this.height; y++){
+                    this.contents[x][y] = '#';
+                }
+            }
+        }
+
+        fillRandom = () => {
+            for(let x = 0; x < this.width; x++){
+                for(let y = 0; y < this.height; y++){
+                    this.contents[x][y] = this.randomCharacter();
+                }
+            }
+        }
+
+        fillRemaining = () => {
+            this.log('Filling remaining cells with random characters');
+            for(let x = 0; x < this.width; x++){
+                for(let y = 0; y < this.height; y++){
+                    if(this.contents[x][y] === '#')
+                        this.contents[x][y] = this.randomCharacter();
+                }
+            }
+        }
+
+        // min = 65 = a; max = 90 = z
+        randomCharacter = () => String.fromCharCode(Math.round((Math.random() * 25) + 65)).toLowerCase();
+
+        print = () => {
+            let row = "";
+            for(let y = 0; y < this.height; y++){
+                for(let x = 0; x < this.width; x++){
+                    row += `${this.contents[x][y]} `;
+                }
+                console.log(row);
+                row = "";
+            }
+        }
+
+        log = (message) => {
+            console.log(message);
+            this.logs += `${message}\n`
+        }
+        
+
+        generate = (wordList) => {
+            this.canGenerate(wordList); // misnomer, dubious
+            this.generateWork(wordList);
+        }
+
+        randomWordInRange = (wordList, count) => {
+            let word = null;
+            if(count == 1) // they don't call it a HACKathon for nothing
+                word = wordList[0];
+            else
+                word = wordList[Math.round(Math.random() * count)];
+            this.log(`'${word}' was picked from (${wordList}) as the next word, highest index was ${count}.`);
+            return word;
+        }
+
+        swapWords = (wordList, currentWord, count) => {
+            this.log(`Updating word list in place to ensure unique words are chosen.`);
+            this.log(`Before swap: ${wordList}`);
+            let index = wordList.indexOf(currentWord);
+            let temp = wordList[count];
+            wordList[count] = currentWord;
+            wordList[index] = temp;
+            this.log(`After swap: ${wordList} (All words at or after index ${count} have been placed)`);
+        }
+
+        generateWork = (wordList) => {
+            this.log("Starting board generation 1");
+            let maxAttempts = this.width * this.height * 10;
+            let attemptsBeforeReset = maxAttempts / 10;
+            let resetAttempt = 1;
+            let attempts = 0;
+            let bestBoardAttempt = null;
+            let bestBoardCount = 0;
+            let count = wordList.length - 1;
+            let currentWord = this.randomWordInRange(wordList, count);
+            while(count >= 0 && attempts < maxAttempts){
+                let direction = this.getDirection();
+                let startPosition = this.getStartPosition();
+                if(this.wordFits(currentWord, startPosition, direction)){
+                    this.placeWord(currentWord, startPosition, direction);
+                    this.swapWords(wordList, currentWord, count);
+                    count--;
+                    if(count < 0){
+                        this.log("All words successfully placed.");
+                        break;
+                    }
+                    currentWord = this.randomWordInRange(wordList, count);
+                } else{
+                    attempts++;
+                    if(attempts >= (attemptsBeforeReset * resetAttempt)){
+                        this.log(`Reached limit for attempt ${resetAttempt}.`);
+                        if(bestBoardAttempt == null || count < bestBoardCount){
+                            this.log(`Current attempt generated more words than the previous best. Updating current best.`);
+                            bestBoardAttempt = this.copyCurrentBoard();
+                            bestBoardCount = count;
+                        } else{
+                            this.log(`Current attempt did not generate more words than the previous best.`);
+                        }
+                        this.fill();
+                        resetAttempt++;
+                        count = wordList.length - 1;
+                    }
+                    if(attempts == maxAttempts){
+                        this.log(`Unable to generate every word. Best generation attempt generated ${wordList.length - 1 - bestBoardCount} out of ${wordList.length} words.`);
+                        this.contents = bestBoardAttempt;
+                        break;
+                    }
+                    currentWord = this.randomWordInRange(wordList, count);
+                }
+            }
+            this.fillRemaining();
+        }
+
+        copyCurrentBoard = () => {
+            let newArray = [];
+            for(let i = 0; i < this.contents.length; i++){
+                newArray[i] = this.contents[i].slice();
+            }
+            return newArray;
+        }
+
+        placeWord = (currentWord, startPosition, direction) => {
+            this.log(`Placing '${currentWord}' at (${startPosition}) with direction (${direction})`);
+            let xStart = startPosition[0];
+            let yStart = startPosition[1];
+            let xEnd = xStart + (direction[0] * currentWord.length);
+            let yEnd = yStart + (direction[1] * currentWord.length);
+            for(let i = 0; i < currentWord.length; i++){
+                let placeX = xStart + (direction[0] * i);
+                let placeY = yStart + (direction[1] * i);
+                this.contents[placeX][placeY] = currentWord.charAt(i);
+            }
+            this.log(`Placed '${currentWord}' at (${startPosition}) with direction (${direction})`);
+        }
+
+        wordFits = (currentWord, startPosition, direction) => {
+            this.log(`Seeing if '${currentWord}' fits at (${startPosition}) with direction (${direction})`);
+            let xStart = startPosition[0];
+            let yStart = startPosition[1];
+            let xEnd = xStart + (direction[0] * currentWord.length);
+            let yEnd = yStart + (direction[1] * currentWord.length);
+
+            if(xEnd >= 0 && xEnd < this.width && yEnd >= 0 && yEnd < this.height){
+                for(let i = 0; i < currentWord.length; i++){
+                    let placeX = xStart + (direction[0] * i);
+                    let placeY = yStart + (direction[1] * i);
+                    if(!(this.contents[placeX][placeY] === '#' || this.contents[placeX][placeY] === currentWord.charAt(i))){
+                        this.log(`'${currentWord}' does not fit at (${startPosition}) with direction (${direction})`);
+                        return false;
+                    }
+                }
+            } else {
+                this.log(`'${currentWord}' does not fit at (${startPosition}) with direction (${direction})`);
+                return false;
+            }
+            this.log(`'${currentWord}' fits at (${startPosition}) with direction (${direction})`);
+            return true;
+        }
+
+        getStartPosition = () => [Math.round(Math.random() * (this.width - 1)), Math.round(Math.random() * (this.height - 1))];
+
+        getDirection = () => this.directions[Math.round((Math.random() * 7))];
+
+        canGenerate = (wordList) => {
+            this.log("Checking generation viability");
+            let numSpaces = this.width * this.height;
+            let sum = 0;
+            wordList.forEach((word) => {
+                if(word.length > this.width && word.length > this.height) {
+                    this.log(`Word '${word}' is too large for a board with dimensions ${this.width}x${this.height}.`);
+                }
+                sum += word.length
+            });
+            if(numSpaces < sum){
+                this.log(`Cannot generate every word as a perfect generation would require ${sum} cells, but the board only contains ${this.width*this.height} cells.`);
+            }
+        }
+    }
+
+    let board = null;
+    let boardWidth = 4;
+    let boardHeight = 4;
+    let wordList = ["this", "is", "a", "test"];
+    let wordsElement = document.getElementById("words");
+    let xElement = document.getElementById("xDim");
+    let yElement = document.getElementById("yDim");
+    let containerElement = document.getElementById("crossword-container");
+    let logElement = document.getElementById("log-spew");
+
+    work = () => {
+        board = new Board(boardWidth, boardHeight);
+        board.generate(wordList);
+        if(board.logs !== '')
+            console.log(board.logs);
+        board.print();
+        showBoard();
+    }
+
+    showBoard = () => {
+        containerElement.innerHTML = '';
+        for(let y = 0; y < boardHeight; y++){
+            containerElement.innerHTML += "<div>"
+            for(let x = 0; x < boardWidth; x++){
+                containerElement.innerHTML += `<span style="text-align: center; margin: 20px; width: 200px; font-size: 30px">${board.contents[x][y]}</span>`;
+            }
+            containerElement.innerHTML += `</div>`;
+        }
+        logElement.innerHTML = '<h3>Generation logs</h3>';
+        logElement.innerHTML += board.logs.replace(/\n/g, "<br><li>");
+            logElement.innerHTML = logElement.innerHTML.substring(0, logElement.innerHTML.length - 14);
+    }   
+
+    rework = () => {
+        boardWidth = xElement.value;
+        boardHeight = yElement.value;
+        wordList = wordsElement.value.split(',');
+        if(boardWidth && boardHeight)
+            work();
+    }
+    work();
+</script>
