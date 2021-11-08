@@ -1,14 +1,14 @@
 
 
 <body>
-    Enter words to place in crossword, comma separated<br>
+    Enter words to place in word-search, comma separated<br>
     <input id="words" type="text" placeholder="Enter words here" value="this,is,a,test"><br>
     
     Enter board dimensions<br>
     X: <input id="xDim" type="number" min=1 step=1 value=4> Y: <input id="yDim" type="number" min=1 step=1 value=4> <br>
 
-    <input type="button" value="Generate Crossword" onclick="rework()">
-    <div id="crossword-container">
+    <input type="button" value="Generate Word Search" onclick="rework()">
+    <div id="word-search-container">
 
     </div>
 
@@ -30,13 +30,13 @@
             [1, 1]
         ];
 
-        constructor(height, width){
+        constructor(width, height){
             this.height = height;
             this.width = width;
             this.logs = '';
             this.log(`Initializing a ${width}x${height} board`);
             this.contents = new Array(width);
-            for(let i = 0; i < height; i++){
+            for(let i = 0; i < width; i++){
                 this.contents[i] = new Array(height);
             }
             this.fill();
@@ -44,8 +44,8 @@
 
         fill = () => {
             this.log('Filling board with #s');
-            for(let x = 0; x < this.width; x++){
-                for(let y = 0; y < this.height; y++){
+            for(let y = 0; y < this.height; y++){
+                for(let x = 0; x < this.width; x++){
                     this.contents[x][y] = '#';
                 }
             }
@@ -229,13 +229,13 @@
     }
 
     let board = null;
-    let boardWidth = 4;
-    let boardHeight = 4;
+    let boardWidth = 8;
+    let boardHeight = 8;
     let wordList = ["this", "is", "a", "test"];
     let wordsElement = document.getElementById("words");
     let xElement = document.getElementById("xDim");
     let yElement = document.getElementById("yDim");
-    let containerElement = document.getElementById("crossword-container");
+    let containerElement = document.getElementById("word-search-container");
     let logElement = document.getElementById("log-spew");
 
     work = () => {
@@ -248,14 +248,17 @@
     }
 
     showBoard = () => {
-        containerElement.innerHTML = '';
+        let contentString = "<table>";
+        containerElement.innerHTML = '<table>';
         for(let y = 0; y < boardHeight; y++){
-            containerElement.innerHTML += "<div>"
+            contentString += "<tr>"
             for(let x = 0; x < boardWidth; x++){
-                containerElement.innerHTML += `<span style="text-align: center; margin: 20px; width: 200px; font-size: 30px">${board.contents[x][y]}</span>`;
+                contentString += `<th style="text-align: center; margin: 20px; border: 1px solid black; height: calc((100vh - 200px) / ${board.height}); width: calc(100vw / ${board.width}); font-size: calc(25vw / ${board.width})">${board.contents[x][y]}</th>`;
             }
-            containerElement.innerHTML += `</div>`;
+            contentString += `</tr>`;
         }
+        contentString += "</table>";
+        containerElement.innerHTML = contentString;
         logElement.innerHTML = '<h3>Generation logs</h3>';
         logElement.innerHTML += board.logs.replace(/\n/g, "<br><li>");
             logElement.innerHTML = logElement.innerHTML.substring(0, logElement.innerHTML.length - 14);
