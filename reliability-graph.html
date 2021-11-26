@@ -1,11 +1,18 @@
 <html>
+    <title>Reliability Formula Calculator</title>
+    <a href="index.html">Go back</a>
     <h1>
         Reliability Calculator
     </h1>
+    <div>Allows the generation of reliability formulae for both serial and parallel connections. (Thanks for the idea, Dr. G!)</div>
+    <div>Add nodes by clicking on the left portion of the canvas. Right click a node to delete it and its connections.</div>
+    <div>Then, create directional connections between nodes by clicking the 'from' node, followed by the 'to' node.</div>
+    <div>All connection types are allowed (one-one, one-many, many-one, many-many), but must be created in a certain order.</div>
+    <div>Good luck figuring out acceptable orders!</div>
+    <div>Click the solve button to flatten the nodes and generate the proper formula to calculate reliability of the nodes.</div>
+    <div>NOTE: console (press f12) output displays the process behind the flattening.</div>
     <canvas oncontextmenu="return false;" id="canvasRef" style="border: 1px solid black"></canvas>
-    <div id="result">
-        
-    </div>
+    <div id="result"></div>
 </html>
 
 <script>
