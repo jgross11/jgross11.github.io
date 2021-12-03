@@ -42,11 +42,6 @@ def main():
     </div>
     '''
     date = determine_date()
-    date_check = input(f"Are you creating an entry for the week of {date}? y/n: ").lower()
-    if date_check == 'y' or date_check == 'yes':
-        pass
-    else:
-        date = input("Enter date in format mmddyyyy: ")
     header = generate_header(date)
     activities = generate_projects()
 
@@ -55,8 +50,13 @@ def main():
 def determine_date():
     today = datetime.date.today()
     # assume entries are created on monday
-    monday = datetime.date(today.year, today.month, today.day - today.weekday())
-    return f'{monday.month}{monday.day}{monday.year}'
+    monday = today - datetime.timedelta(days=today.weekday())
+    monday = f'{monday.month}{monday.day}{monday.year}'
+    date_check = input(f"Are you creating an entry for the week of {monday}? y/n: ").lower()
+    if date_check == 'y' or date_check == 'yes':
+        return monday
+    else:
+        return input("Enter date in format mmddyyyy: ")
 
 def generate_header(date : str) -> str:
     month = date[0:2]
