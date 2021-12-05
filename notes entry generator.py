@@ -37,7 +37,7 @@ def generate_projects() -> str:
     # projects
     while True:
         project_name = input('Enter project name: ')
-        text = text + f'<li><a href="https://github.com/jgross11/">{project_name}</a><ul>'
+        text = text + f'<li><a target="_blank" href="https://github.com/jgross11/">{project_name}</a><ul>'
         # project entries
         while True:
             project_entry = input('Enter task description: ')
