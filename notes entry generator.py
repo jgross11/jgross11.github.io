@@ -19,7 +19,7 @@ def determine_date() -> str:
     today = datetime.date.today()
     # assume entries are created on sunday
     sunday = today - datetime.timedelta(days=today.weekday()+1)
-    sunday = f'{sunday.month}{sunday.day}{sunday.year}'
+    sunday = f'{format(sunday.month, "02")}{format(sunday.day, "02")}{format(sunday.year, "04")}'
     if confirm(f"Are you creating an entry for the week of {sunday}?"):
         return sunday
     else:
