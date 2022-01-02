@@ -8,7 +8,7 @@
         <a target="_blank" href="https://www.youtube.com/watch?v=2_fTV3p39EA">Prima Donna</a> not included. <br>
         A spattering of my activities / thoughts over time. Any views you like are mine, any you dislike are not my
         employer's, etc.<br>
-        <div class="legend">
+        <div class="block" style="width: 10vw">
             <b>Jump to entry</b><hr>
             <ul class="legend_list">
                 <li><a href="#12192021">12/19/2021</a></li>
@@ -18,9 +18,13 @@
                 <li><a href="#11212021">11/21/2021</a></li>
             </ul>
         </div>
-        <div class="generated">
-            <b>Daily Content</b><hr>
-            <div id="daily-content">Loading..</div>
+        <div class="block" style="width: 30vw">
+            <b><a target='_blank' href="https://icanhazdadjoke.com/">Joke</a></b> <span style="cursor: pointer; font-size: smaller; color: purple" onclick="fetchJokeContent()">(new joke)</span><hr>
+            <div id="joke-content" class="block_content">Loading..</div>
+        </div>
+        <div class="block" style="width: 30vw">
+            <b><a target='_blank' href="https://github.com/nasa/apod-api">Astronomical Picture of the Day</a></b><hr>
+            <div id="apod-content" class="block_content">Loading..</div>
         </div>
     </div>
     <hr>
@@ -198,20 +202,19 @@
             to write anything I think is right</a></div>
     <script>
         let dailyDiv = document.getElementById("daily-content");
-        fetchDailyContent = () => {
-            let fbi = null;
-            let dad = null;
-            let apod = null;
-            dailyDiv.innerHTML = "";
-            fetch("https://api.fbi.gov/wanted/v1/list")
-            .then(data => data.json())
-            .then(json => console.log(json));
+        let jokeDiv = document.getElementById("joke-content");
+        let apodDiv = document.getElementById("apod-content");
+
+        fetchJokeContent = () => {
             let dadHeaders = {Accept: "application/json"};
             // be nice to the api 
             dadHeaders["User-Agent"] = "(personal use - thanks :) ) jgross11.github.io";
             fetch("https://icanhazdadjoke.com", {headers: dadHeaders})
             .then(data => data.json())
-            .then(json => dailyDiv.innerHTML += `<br><a target='_blank' href="https://icanhazdadjoke.com/">JOKE</a>: ${json.joke}`);
+            .then(json => jokeDiv.innerHTML = json.joke);
+        }
+
+        fetchApodContent = () => {
             fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
             .then(data => data.json())
             .then(json => {
@@ -227,8 +230,16 @@
                     }
                 );
                 expText += "...";
-                dailyDiv.innerHTML += `<br><a target='_blank' href='https://github.com/nasa/apod-api'>APOD</a>: <a target='_blank' href="${json.hdurl}">${expText}</a>`
+                apodDiv.innerHTML = `<br><a target='_blank' href="${json.hdurl}">${expText}</a>`
             });
+        }
+
+        fetchDailyContent = () => {
+            fetchApodContent();
+            fetchJokeContent();
+            fetch("https://api.fbi.gov/wanted/v1/list")
+            .then(data => data.json())
+            .then(json => console.log(json));
         };
 
         fetchDailyContent();

@@ -28,17 +28,35 @@ body{
     display: inline-block;
 }
 
+.block_content{
+    font-size: larger;
+    font-weight: bolder;
+}
+
 .legend_list{
-    height: 10vh;
+    height: 14vh;
     overflow-y: auto;
+    margin-top: -1vh;
+}
+
+.block{
+    height: 20vh;
+    display: flex;
+    vertical-align: middle;
+    text-align: center;
+    margin-top: 5px;
+    border: 1px solid black;
+    overflow-y: auto;
+    display: inline-block;
 }
 
 .generated{
     text-align: center;
-    border: 1px solid black;
-    display: inline-block;
     margin-top: 5px;
-    width: 30vw;
+    width: 10vw;
+    border: 1px solid black;
+    overflow-y: auto;
+    display: inline-block;
 }
 
 .entry{
