@@ -218,6 +218,7 @@
             fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
             .then(data => data.json())
             .then(json => {
+                console.log(json);
                 let explanation = json.explanation.split(" ", 10);
                 let expText = "";
                 explanation.forEach(
@@ -230,7 +231,7 @@
                     }
                 );
                 expText += "...";
-                apodDiv.innerHTML = `<br><a target='_blank' href="${json.hdurl}">${expText}</a>`
+                apodDiv.innerHTML = `<br><a target='_blank' href="https://apod.nasa.gov/apod/astropix.html">${expText}</a>`
             });
         }
 
