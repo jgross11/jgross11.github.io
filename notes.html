@@ -8,13 +8,20 @@
         <a target="_blank" href="https://www.youtube.com/watch?v=2_fTV3p39EA">Prima Donna</a> not included. <br>
         A spattering of my activities / thoughts over time. Any views you like are mine, any you dislike are not my
         employer's, etc.<br>
-        <ul>
-            <li><a href="#12192021">12/19/2021</a></li>
-            <li><a href="#12122021">12/12/2021</a></li>
-            <li><a href="#12052021">12/05/2021</a></li>
-            <li><a href="#11282021">11/28/2021</a></li>
-            <li><a href="#11212021">11/21/2021</a></li>
-        </ul>
+        <div class="legend">
+            <b>Jump to entry</b><hr>
+            <ul class="legend_list">
+                <li><a href="#12192021">12/19/2021</a></li>
+                <li><a href="#12122021">12/12/2021</a></li>
+                <li><a href="#12052021">12/05/2021</a></li>
+                <li><a href="#11282021">11/28/2021</a></li>
+                <li><a href="#11212021">11/21/2021</a></li>
+            </ul>
+        </div>
+        <div class="generated">
+            <b>Daily Content</b><hr>
+            <div id="daily-content">Loading..</div>
+        </div>
     </div>
     <hr>
     <div class="entries">
@@ -189,4 +196,41 @@
     <hr>
     <div class="footer"><a target="_blank" href="https://www.youtube.com/watch?v=QkVufQLsRag">I least I have the right
             to write anything I think is right</a></div>
+    <script>
+        let dailyDiv = document.getElementById("daily-content");
+        fetchDailyContent = () => {
+            let fbi = null;
+            let dad = null;
+            let apod = null;
+            dailyDiv.innerHTML = "";
+            fetch("https://api.fbi.gov/wanted/v1/list")
+            .then(data => data.json())
+            .then(json => console.log(json));
+            let dadHeaders = {Accept: "application/json"};
+            // be nice to the api 
+            dadHeaders["User-Agent"] = "(personal use - thanks :) ) jgross11.github.io";
+            fetch("https://icanhazdadjoke.com", {headers: dadHeaders})
+            .then(data => data.json())
+            .then(json => dailyDiv.innerHTML += `<br><a target='_blank' href="https://icanhazdadjoke.com/">JOKE</a>: ${json.joke}`);
+            fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
+            .then(data => data.json())
+            .then(json => {
+                let explanation = json.explanation.split(" ", 10);
+                let expText = "";
+                explanation.forEach(
+                    word => {
+                        expText += word[0].toUpperCase();
+                        for(let i = 1; i < word.length; i++){
+                            expText += word[i];
+                        }
+                        expText += " ";
+                    }
+                );
+                expText += "...";
+                dailyDiv.innerHTML += `<br><a target='_blank' href='https://github.com/nasa/apod-api'>APOD</a>: <a target='_blank' href="${json.hdurl}">${expText}</a>`
+            });
+        };
+
+        fetchDailyContent();
+    </script>
 </body>
