@@ -357,15 +357,18 @@
           let explanation = json.explanation.split(" ", 10);
           let expText = "";
           explanation.forEach((word) => {
-            expText += word[0].toUpperCase();
-            for (let i = 1; i < word.length; i++) {
-              expText += word[i];
+            if(word && word.length > 0){
+              expText += word[0].toUpperCase();
+              for (let i = 1; i < word.length; i++) {
+                expText += word[i];
+              }
+              expText += " ";
             }
-            expText += " ";
           });
           expText += "...";
           apodDiv.innerHTML = `<br><a target='_blank' href="https://apod.nasa.gov/apod/astropix.html">${expText}</a>`;
-        });
+        })
+        .catch(e => apodDiv.innerHTML = `Couldn't fetch APOD - error: ${e}`);
     };
 
     fetchDailyContent = () => {
