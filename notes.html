@@ -413,7 +413,6 @@
       fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
         .then((data) => data.json())
         .then((json) => {
-          console.log(json);
           let explanation = json.explanation.split(" ", 10);
           let expText = "";
           explanation.forEach((word) => {
@@ -438,7 +437,7 @@
       fetchJokeContent();
       fetch("https://api.fbi.gov/wanted/v1/list")
         .then((data) => data.json())
-        .then((json) => console.log(json));
+        .then((json) => console.log(/*json*/));
     };
 
     fetchDailyContent();
