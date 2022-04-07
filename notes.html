@@ -27,7 +27,7 @@
         <li><a href="#11212021">11/21/2021</a></li>
       </ul>
     </div>
-    <div class="block" style="width: 25vw">
+    <div class="block" style="width: 20vw">
       <b><a target="_blank" href="https://icanhazdadjoke.com/">Joke</a></b>
       <span
         style="cursor: pointer; font-size: smaller; color: purple"
@@ -37,7 +37,7 @@
       <hr />
       <div id="joke-content" class="block_content">Loading..</div>
     </div>
-    <div class="block" style="width: 25vw">
+    <div class="block" style="width: 20vw">
       <b>
         <a target="_blank" href="https://github.com/nasa/apod-api"
           >Astronomical Picture of the Day</a></b
@@ -45,7 +45,7 @@
       <hr />
       <div id="apod-content" class="block_content">Loading..</div>
     </div>
-    <div class="block" style="width: 25vw">
+    <div class="block" style="width: 20vw">
       <b>
         <a target="_blank" href="https://github.com/ajzbc/kanye.rest"
           >Kanye Quote</a></b
@@ -57,6 +57,19 @@
       >
       <hr />
       <div id="kanye-content" class="block_content">Loading..</div>
+    </div>
+    <div class="block" style="width: 20vw">
+      <b>
+        <a target="_blank" href="https://github.com/drewthoennes/Bored-API"
+          >Random Activity</a></b
+      >
+      <span
+        style="cursor: pointer; font-size: smaller; color: purple"
+        onclick="fetchActivityContent()"
+        >(new activity)</span
+      > Free? <input type="checkbox" onclick="toggleActivityIsFree()">
+      <hr />
+      <div id="activity-content" class="block_content">Loading..</div>
     </div>
     
   </div>
@@ -502,6 +515,13 @@
     let jokeDiv = document.getElementById("joke-content");
     let apodDiv = document.getElementById("apod-content");
     let kanyeDiv = document.getElementById("kanye-content");
+    let activityDiv = document.getElementById("activity-content");
+    let activityIsFree = false;
+
+    toggleActivityIsFree = () => {
+      activityIsFree=!activityIsFree;
+      fetchActivityContent();
+    }
 
     fetchKanyeContent = () => {
       fetch("https://api.kanye.rest/")
@@ -518,6 +538,18 @@
         .then((data) => data.json())
         .then((json) => (jokeDiv.innerHTML = json.joke));
     };
+
+    fetchActivityContent = () => {
+      fetch(activityIsFree ? "https://www.boredapi.com/api/activity?price=0.0" : "https://www.boredapi.com/api/activity?minprice=0.001")
+      .then(data => data.json())
+      .then(json => {
+        activityDiv.innerHTML = 
+        `
+          Activity: ${json.activity}<br>
+          Type: ${json.type}<br>
+        `;
+      })
+    }
 
     fetchApodContent = () => {
       fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
@@ -546,6 +578,7 @@
       fetchApodContent();
       fetchJokeContent();
       fetchKanyeContent();
+      fetchActivityContent();
       fetch("https://api.fbi.gov/wanted/v1/list")
         .then((data) => data.json())
         .then((json) => console.log(/*json*/));
