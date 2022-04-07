@@ -27,7 +27,7 @@
         <li><a href="#11212021">11/21/2021</a></li>
       </ul>
     </div>
-    <div class="block" style="width: 30vw">
+    <div class="block" style="width: 25vw">
       <b><a target="_blank" href="https://icanhazdadjoke.com/">Joke</a></b>
       <span
         style="cursor: pointer; font-size: smaller; color: purple"
@@ -37,15 +37,28 @@
       <hr />
       <div id="joke-content" class="block_content">Loading..</div>
     </div>
-    <div class="block" style="width: 30vw">
-      <b
-        ><a target="_blank" href="https://github.com/nasa/apod-api"
-          >Astronomical Picture of the Day</a
-        ></b
+    <div class="block" style="width: 25vw">
+      <b>
+        <a target="_blank" href="https://github.com/nasa/apod-api"
+          >Astronomical Picture of the Day</a></b
       >
       <hr />
       <div id="apod-content" class="block_content">Loading..</div>
     </div>
+    <div class="block" style="width: 25vw">
+      <b>
+        <a target="_blank" href="https://github.com/ajzbc/kanye.rest"
+          >Kanye Quote</a></b
+      >
+      <span
+        style="cursor: pointer; font-size: smaller; color: purple"
+        onclick="fetchKanyeContent()"
+        >(new quote)</span
+      >
+      <hr />
+      <div id="kanye-content" class="block_content">Loading..</div>
+    </div>
+    
   </div>
   <hr />
   <div class="warning"><b>Feb-Apr 2022: Focusing on training, no time for side projects...</b></div>
@@ -483,10 +496,18 @@
       >I least I have the right to write anything I think is right</a
     >
   </div>
+
   <script>
     let dailyDiv = document.getElementById("daily-content");
     let jokeDiv = document.getElementById("joke-content");
     let apodDiv = document.getElementById("apod-content");
+    let kanyeDiv = document.getElementById("kanye-content");
+
+    fetchKanyeContent = () => {
+      fetch("https://api.kanye.rest/")
+      .then((data) => data.json())
+      .then((json) => (kanyeDiv.innerHTML = json.quote));
+    };
 
     fetchJokeContent = () => {
       let dadHeaders = { Accept: "application/json" };
@@ -524,6 +545,7 @@
     fetchDailyContent = () => {
       fetchApodContent();
       fetchJokeContent();
+      fetchKanyeContent();
       fetch("https://api.fbi.gov/wanted/v1/list")
         .then((data) => data.json())
         .then((json) => console.log(/*json*/));
