@@ -15,6 +15,7 @@
       <b>Jump to entry</b>
       <hr />
       <ul class="legend_list">
+        <li><a href="#04032022">04/03/2022</a></li>
         <li><a href="#01232022">01/23/2022</a></li>
         <li><a href="#01162022">01/16/2022</a></li>
         <li><a href="#01092022">01/09/2022</a></li>
@@ -40,42 +41,84 @@
     <div class="block" style="width: 20vw">
       <b>
         <a target="_blank" href="https://github.com/nasa/apod-api"
-          >Astronomical Picture of the Day</a></b
+          >Astronomical Picture of the Day</a
+        ></b
       >
       <hr />
       <div id="apod-content" class="block_content">Loading..</div>
     </div>
-    <div id ="quote-holder" class="block" style="width: 20vw">
+    <div id="quote-holder" class="block" style="width: 20vw">
       <button onclick="updateQuoteIndex(-1)"><</button>
       <button onclick="updateQuoteIndex(1)">></button>
-      <div id="quote-content" class="block_content">
-        Loading..
-      </div>
+      <div id="quote-content" class="block_content">Loading..</div>
     </div>
     <div class="block" style="width: 20vw">
       <b>
         <a target="_blank" href="https://github.com/drewthoennes/Bored-API"
-          >Random Activity</a></b
+          >Random Activity</a
+        ></b
       >
       <span
         style="cursor: pointer; font-size: smaller; color: purple"
         onclick="fetchActivityContent()"
         >(new activity)</span
-      > Free? <input type="checkbox" onclick="toggleActivityIsFree()">
+      >
+      Free? <input type="checkbox" onclick="toggleActivityIsFree()" />
       <hr />
       <div id="activity-content" class="block_content">Loading..</div>
     </div>
-    
   </div>
   <hr />
-  <div class="warning"><b>Feb-Apr 2022: Focusing on training, no time for side projects...</b></div>
   <div class="entries">
+    <div class="entry">
+      <h3 id="04032022">Week of 04/03/2022</h3>
+      <h4>Active Projects</h4>
+      <ul>
+        <li>
+          <a target="_blank" href="https://github.com/jgross11/bless-this-chess/tree/dev"
+            >Bless This Chess</a
+          >
+          <ul>
+            <li>
+              Created basic game GUI based off a simple model that renders
+              pieces and handles selection / moving of pieces across board.
+            </li>
+          </ul>
+        </li>
+        <li>
+          Notes (this)
+          <ul>
+            <li>
+              Added activity block to display a random activity for rainy days.
+            </li>
+            <li>
+              Added quotes block to display a random quote from the given
+              subject matter, which is toggleable.
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <h4>Ideas</h4>
+      <ul>
+        <li>none</li>
+      </ul>
+      <h4>Personal</h4>
+      <ul>
+        <li>none</li>
+      </ul>
+      <!-- generated on 2022-04-10 23:23:14.672637-->
+    </div>
+    <div class="warning">
+      <b>Feb-Apr 2022: Focusing on training, no time for side projects...</b>
+    </div>
     <div class="entry">
       <h3 id="01232022">Week of 01/23/2022</h3>
       <h4>Active Projects</h4>
       <ul>
         <li>
-          <a target="_blank" href="https://github.com/jgross11/bless-this-chess/tree/dev"
+          <a
+            target="_blank"
+            href="https://github.com/jgross11/bless-this-chess/tree/dev"
             >Bless This Chess</a
           >
           <ul>
@@ -93,11 +136,16 @@
       <h4>Personal</h4>
       <ul>
         <li>
-          Book: <a href="https://en.wikipedia.org/wiki/Surely_You%27re_Joking,_Mr._Feynman!" target="_blank">Surely You're Joking, Mr. Feynman!</a> - "But then a miracle
-          occurred, as it has occurred again and again in my life, and it's very
-          lucky for me: the moment I start to think about the physics, and have
-          to concentrate on what I'm explaining, nothing else occupied my mind -
-          I'm completely immune to being nervous."
+          Book:
+          <a
+            href="https://en.wikipedia.org/wiki/Surely_You%27re_Joking,_Mr._Feynman!"
+            target="_blank"
+            >Surely You're Joking, Mr. Feynman!</a
+          >
+          - "But then a miracle occurred, as it has occurred again and again in
+          my life, and it's very lucky for me: the moment I start to think about
+          the physics, and have to concentrate on what I'm explaining, nothing
+          else occupied my mind - I'm completely immune to being nervous."
         </li>
       </ul>
       <!-- generated on 2022-01-29 22:08:31.807896-->
@@ -515,14 +563,16 @@
     let QUOTE_FETCH_FAIL_TEXT = "Failed to fetch quote..";
 
     toggleActivityIsFree = () => {
-      activityIsFree=!activityIsFree;
+      activityIsFree = !activityIsFree;
       fetchActivityContent();
-    }
+    };
 
-    async function loadQuote(){
+    async function loadQuote() {
       let choice = quoteChoices[quotesIndex];
       let quote = await choice.function();
-      quoteDiv.innerHTML = "" + `
+      quoteDiv.innerHTML =
+        "" +
+        `
       <b>
         <a target="_blank" href="${choice.link}"
           >${choice.title}</a></b
@@ -534,35 +584,44 @@
       >
       <hr />
       ${quote}
-      `
+      `;
     }
 
     updateQuoteIndex = (direction) => {
-      quotesIndex = (((quotesIndex + direction) % quoteChoices.length) + quoteChoices.length) % quoteChoices.length;
+      quotesIndex =
+        (((quotesIndex + direction) % quoteChoices.length) +
+          quoteChoices.length) %
+        quoteChoices.length;
       loadQuote();
+    };
+
+    async function fetchBBContent() {
+      let resp = await fetchQuote(
+        "https://breaking-bad-quotes.herokuapp.com/v1/quotes"
+      );
+      return resp
+        ? `${resp[0].quote}<br>-${resp[0].author}`
+        : QUOTE_FETCH_FAIL_TEXT;
     }
 
-    async function fetchBBContent(){
-      let resp = await  fetchQuote("https://breaking-bad-quotes.herokuapp.com/v1/quotes");
-      return resp ? `${resp[0].quote}<br>-${resp[0].author}` : QUOTE_FETCH_FAIL_TEXT;
-    }
-
-    async function fetchProgrammingQuoteContent(){
-      let resp = await fetchQuote("https://programming-quotes-api.herokuapp.com/quotes/random");
+    async function fetchProgrammingQuoteContent() {
+      let resp = await fetchQuote(
+        "https://programming-quotes-api.herokuapp.com/quotes/random"
+      );
       console.log(resp);
       return resp ? `${resp.en}<br>-${resp.author}` : QUOTE_FETCH_FAIL_TEXT;
     }
 
-    async function fetchKanyeContent(){
-      let resp = await fetchQuote("https://api.kanye.rest/"); 
+    async function fetchKanyeContent() {
+      let resp = await fetchQuote("https://api.kanye.rest/");
       return resp ? resp.quote : QUOTE_FETCH_FAIL_TEXT;
-    };
+    }
 
-    async function fetchQuote(url){
+    async function fetchQuote(url) {
       let result;
       await fetch(url)
-      .then((data) => data.json())
-      .then((json) => result = json);
+        .then((data) => data.json())
+        .then((json) => (result = json));
       return result;
     }
 
@@ -577,16 +636,19 @@
     };
 
     fetchActivityContent = () => {
-      fetch(activityIsFree ? "https://www.boredapi.com/api/activity?price=0.0" : "https://www.boredapi.com/api/activity?minprice=0.001")
-      .then(data => data.json())
-      .then(json => {
-        activityDiv.innerHTML = 
-        `
+      fetch(
+        activityIsFree
+          ? "https://www.boredapi.com/api/activity?price=0.0"
+          : "https://www.boredapi.com/api/activity?minprice=0.001"
+      )
+        .then((data) => data.json())
+        .then((json) => {
+          activityDiv.innerHTML = `
           Activity: ${json.activity}<br>
           Type: ${json.type}<br>
         `;
-      })
-    }
+        });
+    };
 
     fetchApodContent = () => {
       fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
@@ -625,18 +687,18 @@
       {
         title: "Programming Quote",
         function: fetchProgrammingQuoteContent,
-        link: "https://github.com/skolakoda/programming-quotes-api"
+        link: "https://github.com/skolakoda/programming-quotes-api",
       },
       {
         title: "Kanye Quote",
         function: fetchKanyeContent,
-        link: "https://github.com/ajzbc/kanye.rest"
+        link: "https://github.com/ajzbc/kanye.rest",
       },
       {
         title: "Breaking Bad Quote",
         function: fetchBBContent,
-        link: "https://github.com/shevabam/breaking-bad-quotes"
-      }
+        link: "https://github.com/shevabam/breaking-bad-quotes",
+      },
     ];
 
     fetchDailyContent();
