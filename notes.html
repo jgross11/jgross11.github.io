@@ -45,18 +45,12 @@
       <hr />
       <div id="apod-content" class="block_content">Loading..</div>
     </div>
-    <div class="block" style="width: 20vw">
-      <b>
-        <a target="_blank" href="https://github.com/ajzbc/kanye.rest"
-          >Kanye Quote</a></b
-      >
-      <span
-        style="cursor: pointer; font-size: smaller; color: purple"
-        onclick="fetchKanyeContent()"
-        >(new quote)</span
-      >
-      <hr />
-      <div id="kanye-content" class="block_content">Loading..</div>
+    <div id ="quote-holder" class="block" style="width: 20vw">
+      <button onclick="updateQuoteIndex(-1)"><</button>
+      <button onclick="updateQuoteIndex(1)">></button>
+      <div id="quote-content" class="block_content">
+        Loading..
+      </div>
     </div>
     <div class="block" style="width: 20vw">
       <b>
@@ -514,20 +508,63 @@
     let dailyDiv = document.getElementById("daily-content");
     let jokeDiv = document.getElementById("joke-content");
     let apodDiv = document.getElementById("apod-content");
-    let kanyeDiv = document.getElementById("kanye-content");
+    let quoteDiv = document.getElementById("quote-content");
     let activityDiv = document.getElementById("activity-content");
     let activityIsFree = false;
+    let quotesIndex = 0;
+    let QUOTE_FETCH_FAIL_TEXT = "Failed to fetch quote..";
 
     toggleActivityIsFree = () => {
       activityIsFree=!activityIsFree;
       fetchActivityContent();
     }
 
-    fetchKanyeContent = () => {
-      fetch("https://api.kanye.rest/")
-      .then((data) => data.json())
-      .then((json) => (kanyeDiv.innerHTML = json.quote));
+    async function loadQuote(){
+      let choice = quoteChoices[quotesIndex];
+      let quote = await choice.function();
+      quoteDiv.innerHTML = "" + `
+      <b>
+        <a target="_blank" href="${choice.link}"
+          >${choice.title}</a></b
+      >
+      <span
+        style="cursor: pointer; font-size: smaller; color: purple"
+        onclick="loadQuote()"
+        >(new quote)</span
+      >
+      <hr />
+      ${quote}
+      `
+    }
+
+    updateQuoteIndex = (direction) => {
+      quotesIndex = (((quotesIndex + direction) % quoteChoices.length) + quoteChoices.length) % quoteChoices.length;
+      loadQuote();
+    }
+
+    async function fetchBBContent(){
+      let resp = await  fetchQuote("https://breaking-bad-quotes.herokuapp.com/v1/quotes");
+      return resp ? `${resp[0].quote}<br>-${resp[0].author}` : QUOTE_FETCH_FAIL_TEXT;
+    }
+
+    async function fetchProgrammingQuoteContent(){
+      let resp = await fetchQuote("https://programming-quotes-api.herokuapp.com/quotes/random");
+      console.log(resp);
+      return resp ? `${resp.en}<br>-${resp.author}` : QUOTE_FETCH_FAIL_TEXT;
+    }
+
+    async function fetchKanyeContent(){
+      let resp = await fetchQuote("https://api.kanye.rest/"); 
+      return resp ? resp.quote : QUOTE_FETCH_FAIL_TEXT;
     };
+
+    async function fetchQuote(url){
+      let result;
+      await fetch(url)
+      .then((data) => data.json())
+      .then((json) => result = json);
+      return result;
+    }
 
     fetchJokeContent = () => {
       let dadHeaders = { Accept: "application/json" };
@@ -577,12 +614,30 @@
     fetchDailyContent = () => {
       fetchApodContent();
       fetchJokeContent();
-      fetchKanyeContent();
+      loadQuote();
       fetchActivityContent();
       fetch("https://api.fbi.gov/wanted/v1/list")
         .then((data) => data.json())
         .then((json) => console.log(/*json*/));
     };
+
+    let quoteChoices = [
+      {
+        title: "Programming Quote",
+        function: fetchProgrammingQuoteContent,
+        link: "https://github.com/skolakoda/programming-quotes-api"
+      },
+      {
+        title: "Kanye Quote",
+        function: fetchKanyeContent,
+        link: "https://github.com/ajzbc/kanye.rest"
+      },
+      {
+        title: "Breaking Bad Quote",
+        function: fetchBBContent,
+        link: "https://github.com/shevabam/breaking-bad-quotes"
+      }
+    ];
 
     fetchDailyContent();
   </script>
