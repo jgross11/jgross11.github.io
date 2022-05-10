@@ -1,0 +1,158 @@
+<html>
+    <div id="difficulty"></div>
+    <button onclick="toggleDifficulty()">Change Difficulty</button><br>
+
+    <div id="container" style="font-family: 'Courier New', Courier, monospace;">
+
+    </div>
+    X: <input id="moveX" type="number" min="1" max="30"><br>
+    Y: <input id="moveY" type="number" min="1" max="30"><br>
+    <button onclick="handleMove()">Submit Move</button><br>
+    <button onclick="newBoard()">New Board</button>
+
+    <script>
+        let container = document.getElementById("container");
+        let difDiv = document.getElementById("difficulty");
+        let xDiv = document.getElementById("moveX");
+        let yDiv = document.getElementById("moveY");
+
+        let settings = [
+            {text: "Beginner", x: 8, y: 8, bombs: 10},
+            {text: "Intermediate", x: 16, y: 16, bombs: 40},
+            {text: "Expert", x: 30, y: 16, bombs: 99}
+        ];
+
+        let gameOver = false;
+
+        let board = [];
+
+        let currentDifficulty=-1;
+
+        toggleDifficulty = () => {
+            currentDifficulty=(currentDifficulty+1)%3;
+            newBoard();
+            writeDifficulty();
+        }
+
+        newBoard = () => {
+            gameOver = false;
+            generateBoard();
+            writeBoard();
+        }
+
+        Tile = () => {return {bombs: 0, visible: false}};
+
+        generateBoard = () => {
+            let x = settings[currentDifficulty].x;
+            let y = settings[currentDifficulty].y;
+            let numBombs = settings[currentDifficulty].bombs;
+            let knownPositions = {};
+
+            // 0 fill
+            for(let y1 = 0; y1 < y; y1++){
+                board[y1] = new Array(x);
+                for(let x1 = 0; x1 < x; x1++){
+                    board[y1][x1]=Tile();
+                }
+            }
+
+            // bombs
+            let currentAmount = 0;
+            while(currentAmount < numBombs){
+                let ranX = Math.floor(Math.random() * (x-1));
+                let ranY = Math.floor(Math.random() * (y-1));
+                if(knownPositions[ranX] && knownPositions[ranX][ranY]) continue;
+                else{
+                    knownPositions[ranX] = new Array();
+                    knownPositions[ranX][ranY] = 1;
+                    board[ranY][ranX].bombs="b";
+                    currentAmount++;
+                }
+            }
+
+            // calculate bombs per tile
+            for(let y1 = 0; y1 < y; y1++){
+                for(let x1 = 0; x1 < x; x1++){
+                    let tile = board[y1][x1];
+                    if(tile.bombs=="b") continue;
+                    if(y1-1 > -1 && x1-1 > -1 && board[y1-1][x1-1].bombs=="b") tile.bombs++;
+                    if(y1-1 > -1 && board[y1-1][x1].bombs=="b") tile.bombs++;
+                    if(y1-1 > -1 && x1+1 < x && board[y1-1][x1+1].bombs=="b") tile.bombs++;
+                    if(x1-1 > -1 && board[y1][x1-1].bombs=="b") tile.bombs++;
+                    if(x1+1 < x && board[y1][x1+1].bombs=="b") tile.bombs++;
+                    if(y1+1 < y && x1-1 > -1 && board[y1+1][x1-1].bombs=="b") tile.bombs++;
+                    if(y1+1 < y && board[y1+1][x1].bombs=="b") tile.bombs++;
+                    if(y1+1 < y && x1-1 > -1 && board[y1+1][x1-1].bombs=="b") tile.bombs++;
+                }
+            }
+        }
+
+        writeDifficulty = () => difDiv.innerHTML = `Current difficulty: ${settings[currentDifficulty].text}`;
+
+        writeBoard = () => {
+            let x = settings[currentDifficulty].x;
+            let y = settings[currentDifficulty].y;
+            let string = "";
+            for(let y1 = 0; y1 < y; y1++){
+                for(let x1 = 0; x1 < x; x1++){
+                    let tile = board[y1][x1];
+                    if(tile.visible)
+                        if(tile.bombs==0) 
+                            string += "□";
+                        else
+                            string += tile.bombs;
+                    else
+                        string += "■";
+                }
+                string += "<br>";
+            }
+            if(gameOver) string += "Game Over!";
+            container.innerHTML = string;
+        }
+
+        handleMove = () => {
+            let xVal = xDiv.value-1;
+            let yVal = yDiv.value-1;
+
+            let xBound = settings[currentDifficulty].x;
+            let yBound = settings[currentDifficulty].y;
+
+            if(!gameOver) updateBoard(xVal, yVal, xBound, yBound, true, []);
+            writeBoard();
+        }
+
+        updateBoard = (x, y, xBound, yBound, clicked, calculatedTiles) => {
+            if(!calculatedTiles[x]) calculatedTiles[x] = new Array();
+            calculatedTiles[x][y] = 1;
+            if(x >= 0 && x < xBound && y >= 0 && y < yBound){
+                let tile = board[y][x];
+                if(tile.bombs == "b" && clicked){
+                    gameOver = true;
+                    tile.visible = true;
+                }
+                if(tile.bombs == "b"){
+                    if(clicked) {
+                        gameOver = true; 
+                        tile.visible = true;
+                    }
+                    else return;
+                }
+                else{
+                    tile.visible = true;
+                    if(tile.bombs != 0) return;
+                    if(!calculatedTiles[x-1]||(calculatedTiles[x-1] && calculatedTiles[x-1][y-1] != 1)) updateBoard(x-1, y-1, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x-1]||(calculatedTiles[x-1] && calculatedTiles[x-1][y] != 1)) updateBoard(x-1, y, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x-1]||(calculatedTiles[x-1] && calculatedTiles[x-1][y+1] != 1)) updateBoard(x-1, y+1, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x]||(calculatedTiles[x] && calculatedTiles[x][y-1] != 1)) updateBoard(x, y-1, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x]||(calculatedTiles[x] && calculatedTiles[x][y+1] != 1)) updateBoard(x, y+1, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x+1]||(calculatedTiles[x+1] && calculatedTiles[x+1][y-1] != 1)) updateBoard(x+1, y-1, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x+1]||(calculatedTiles[x+1] && calculatedTiles[x+1][y] != 1)) updateBoard(x+1, y, xBound, yBound, false, calculatedTiles);
+                    if(!calculatedTiles[x+1]||(calculatedTiles[x+1] && calculatedTiles[x+1][y+1] != 1)) updateBoard(x+1, y+1, xBound, yBound, false, calculatedTiles);
+                }
+            }
+
+        }
+
+        toggleDifficulty();
+    </script>
+</html>
