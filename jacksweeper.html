@@ -89,7 +89,7 @@
 
         button = (x,y,tile) => {
             let text = tile.visible ? tile.bombs == 0 ? "□" : tile.bombs ? tile.bombs : "■" : "■";
-            return `<button style="font-family: 'Courier New', Courier, monospace;" onclick="handleMove(${x},${y})">${text}</button>`;
+            return `<button style="font-family: 'Courier New', Courier, monospace;" ${text != "■" ? "disabled" : ""} onclick="handleMove(${x},${y})">${text}</button>`;
         }
         
         writeBoard = () => {
