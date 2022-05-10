@@ -1,20 +1,18 @@
 <html>
-    <div id="difficulty"></div>
-    <button onclick="toggleDifficulty()">Change Difficulty</button><br><br>
+    <title>Jacksweeper</title>
+    <a style="margin-bottom: -100px" href="/">Go back</a><br><br>
+    <div>Jacksweeper: A basic implementation of Minesweeper made in under 120 minutes. No win conditions or timer.</div><br>
+    <div id="difficulty"></div><br>
 
     <div id="container" style="font-family: 'Courier New', Courier, monospace;">
 
-    </div>
-    X: <input id="moveX" type="number" min="1" max="30"><br>
-    Y: <input id="moveY" type="number" min="1" max="30"><br>
-    <button onclick="handleMove()">Submit Move</button><br>
+    </div><br>
+    <button onclick="toggleDifficulty()">Change Difficulty</button><br>
     <button onclick="newBoard()">New Board</button>
 
     <script>
         let container = document.getElementById("container");
         let difDiv = document.getElementById("difficulty");
-        let xDiv = document.getElementById("moveX");
-        let yDiv = document.getElementById("moveY");
 
         let settings = [
             {text: "Beginner", x: 8, y: 8, bombs: 10},
@@ -87,7 +85,7 @@
             }
         }
 
-        writeDifficulty = () => difDiv.innerHTML = `Current difficulty: ${settings[currentDifficulty].text}`;
+        writeDifficulty = () => difDiv.innerHTML = `Current difficulty: ${settings[currentDifficulty].text} | Number of bombs on field: ${settings[currentDifficulty].bombs}`;
 
         button = (x,y,tile) => {
             let text = tile.visible ? tile.bombs == 0 ? "□" : tile.bombs ? tile.bombs : "■" : "■";
@@ -110,8 +108,6 @@
         }
 
         handleMove = (xVal,yVal) => {
-            // let xVal = xDiv.value-1;
-            // let yVal = yDiv.value-1;
 
             let xBound = settings[currentDifficulty].x;
             let yBound = settings[currentDifficulty].y;
