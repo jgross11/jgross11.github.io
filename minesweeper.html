@@ -1,6 +1,6 @@
 <html>
     <div id="difficulty"></div>
-    <button onclick="toggleDifficulty()">Change Difficulty</button><br>
+    <button onclick="toggleDifficulty()">Change Difficulty</button><br><br>
 
     <div id="container" style="font-family: 'Courier New', Courier, monospace;">
 
@@ -82,27 +82,26 @@
                     if(x1+1 < x && board[y1][x1+1].bombs=="b") tile.bombs++;
                     if(y1+1 < y && x1-1 > -1 && board[y1+1][x1-1].bombs=="b") tile.bombs++;
                     if(y1+1 < y && board[y1+1][x1].bombs=="b") tile.bombs++;
-                    if(y1+1 < y && x1-1 > -1 && board[y1+1][x1-1].bombs=="b") tile.bombs++;
+                    if(y1+1 < y && x1+1 < x && board[y1+1][x1+1].bombs=="b") tile.bombs++;
                 }
             }
         }
 
         writeDifficulty = () => difDiv.innerHTML = `Current difficulty: ${settings[currentDifficulty].text}`;
 
+        button = (x,y,tile) => {
+            let text = tile.visible ? tile.bombs == 0 ? "□" : tile.bombs ? tile.bombs : "■" : "■";
+            return `<button style="font-family: 'Courier New', Courier, monospace;" onclick="handleMove(${x},${y})">${text}</button>`;
+        }
+        
         writeBoard = () => {
             let x = settings[currentDifficulty].x;
             let y = settings[currentDifficulty].y;
-            let string = "";
+            let string = ""
             for(let y1 = 0; y1 < y; y1++){
                 for(let x1 = 0; x1 < x; x1++){
                     let tile = board[y1][x1];
-                    if(tile.visible)
-                        if(tile.bombs==0) 
-                            string += "□";
-                        else
-                            string += tile.bombs;
-                    else
-                        string += "■";
+                    string += button(x1,y1,tile);
                 }
                 string += "<br>";
             }
@@ -110,9 +109,9 @@
             container.innerHTML = string;
         }
 
-        handleMove = () => {
-            let xVal = xDiv.value-1;
-            let yVal = yDiv.value-1;
+        handleMove = (xVal,yVal) => {
+            // let xVal = xDiv.value-1;
+            // let yVal = yDiv.value-1;
 
             let xBound = settings[currentDifficulty].x;
             let yBound = settings[currentDifficulty].y;
